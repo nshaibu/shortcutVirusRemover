@@ -105,7 +105,7 @@ class VirusScanner:
 			if os.path.isdir(entry) and entry == VIRUS_DIR:
 
 				for subentry in os.listdir(OS_DIR_SEP.join([self.root_path, VIRUS_DIR])):
-					files_name = self.root_path + OS_DIR_SEP + VIRUS_DIR + OS_DIR_SEP + subentry
+					files_name = OS_DIR_SEP.join([self.root_path, VIRUS_DIR, subentry])
 
 					if os.path.isdir(files_name) and subentry.isdigit():
 						print("\nCHECKING " + subentry + " ...")
