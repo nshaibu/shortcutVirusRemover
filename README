@@ -1,23 +1,29 @@
 ++++++++++++++++++++++++++++++++++++++++
-+	###  SHORTCUT VIRUS REMOVER  #####	+
++       SHORTCUT VIRUS REMOVER         +
 ++++++++++++++++++++++++++++++++++++++++
-These scripts retrieve user files and folders and remove shortcut virus from external devices like pendrives. 
-The signature for the shortcut virus it removes is that the virus creates a batch script in the folder it affects 
-and converts everything in the folder it affects into a shortcut.
+These scripts retrieve user files and folders and remove shortcut virus from external 
+devices like pendrives. The signature for the shortcut virus it removes is that the 
+virus creates a batch script in the folder it affects and converts everything in the 
+folder it affects into a shortcut.
 
 
 ++++++++++++++++++++++
-+	###  USAGE  ###	+
++       USAGE        +
 ++++++++++++++++++++++
-To remove the shortcut virus in a folder. Download the scripts and if you are on windows copy shortcut_virus_remover.py
-into the folder and click on it or using the CMD change directory to that folder and run the command:
+To remove the shortcut virus in a folder. Download the scripts and if you are on windows
+copy shortcut_virus_remover.py into the folder and click on it or using the CMD change 
+directory to that folder and run the command:
+		
 		python shortcut_virus_remover.py 
 
-However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py. From the terminal change and 
-copy the virus scanner scripts you downloaded to the folder you want to scan. Run either of this commands:
-	sh ./shortcut_virus_remover.sh 
-OR
-	python ./shortcut_virus_remover.py 
+However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py. 
+From the terminal change and copy the virus scanner scripts you downloaded to the folder 
+you want to scan. Run either of this commands:
+		
+		sh ./shortcut_virus_remover.sh 
+				<--OR-->
+		python ./shortcut_virus_remover.py 
+
 	
 +++++++++++++++++++++++++++++++++++++
 +           DEEP SCANNER            +
