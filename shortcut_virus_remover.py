@@ -22,7 +22,7 @@
 #===========================================================================================
 
 import os, sys, time
-import re, glob
+import re, glob, platform
 import sys, shutil
 
 VIRUS_DIR = "Drive"
@@ -32,6 +32,16 @@ OS_DIR_SEP = os.sep
 
 info_b = b'\xff\xfe\x00\x00C\x00\x00\x00o\x00\x00\x00p\x00\x00\x00y\x00\x00\x00r\x00\x00\x00i\x00\x00\x00g\x00\x00\x00h\x00\x00\x00t\x00\x00\x00 \x00\x00\x00(\x00\x00\x00C\x00\x00\x00)\x00\x00\x00 \x00\x00\x002\x00\x00\x000\x00\x00\x001\x00\x00\x007\x00\x00\x00 \x00\x00\x00N\x00\x00\x00a\x00\x00\x00f\x00\x00\x00i\x00\x00\x00u\x00\x00\x00 \x00\x00\x00S\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00[\x00\x00\x00g\x00\x00\x00i\x00\x00\x00t\x00\x00\x00h\x00\x00\x00u\x00\x00\x00b\x00\x00\x00.\x00\x00\x00c\x00\x00\x00o\x00\x00\x00m\x00\x00\x00/\x00\x00\x00n\x00\x00\x00s\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00]\x00\x00\x00.\x00\x00\x00'
 
+
+def validate_dir_path(dir_path):
+	if dir_path == "":
+		return True
+	else:
+		os_type = platform.system()
+		if os_type == "Linux":
+			return re.match(r'^/(\D|\d)*', dir_path) != None
+		elif os_type == "Windows":
+			return re.match(r'^\D:\\(\D|\d)*', dir_path) != None
 
 
 def find_file(fname, dir_path):
@@ -133,14 +143,25 @@ class DeepVirusScanner:
 						print("[%d]:%s %s" % (os.getpid(), "Virus found at ", self.virusscanner.get_batch_file_path()))
 						print("[%d]:%s" % (os.getpid(), "Removing the virus file"))
 						os.remove(self.virusscanner.get_batch_file_path())
+						time.sleep(DELAY)
 
-						print("[%d]:%s" % (os.getpid(), "Checking for virus directory"))
-						#top_dir = os.path.dirname(self.virusscanner.get_batch_file_path())
+						print("[%d]:%s" % (os.getpid(), "Removing shortcuts"))
+						p = re.match(r'(\D|\d)*[\\/]+[Dd][Ee][Ss][Kk][Tt][Oo][Pp]$', dirp, re.IGNORECASE)
+						if not p:
+							for shortcut in glob.glob(OS_DIR_SEP.join([dirp, "*.lnk"])):
+								os.remove(shortcut)
+						time.sleep(DELAY)
+
 						self.virusscanner.set_root_path(dirp)
 						self.virusscanner.set_user_data_path(OS_DIR_SEP.join([dirp, "YourFiles" + str(os.getpid())]))
 
 						self.virusscanner.check_for_virus(dirp)
 
+						virusdir = OS_DIR_SEP.join([dirp, VIRUS_DIR])
+						if os.path.exists(virusdir) and not self.virusscanner.virus_dir == []:
+							shutil.rmtree(virusdir, ignore_errors=True)
+
+						print("Virus file removed: " + str(self.virusscanner.virus_dir))
 
 			if dirs == []: return
 			for dir in dirs:
@@ -154,10 +175,19 @@ if __name__ == '__main__':
 	except:
 		pass
 
-	prompt = str(input("Do you want a deep scanning of your device[y[N]]? "))
+	prompt = str(input("\n\nDo you want a deep scanning of your device[y[N]]? "))
 	if prompt.upper()[0] == "Y":
 		deep_scanner = DeepVirusScanner()
-		deep_scanner.scan_all_dirs()
+		var = None
+
+		while True:
+			var=str(input("Enter the path to the directory you want to scan[ENTER for current directory]: "))
+			if validate_dir_path(var): break
+
+		if not var == "":
+			deep_scanner.scan_all_dirs(var)
+		else:
+			deep_scanner.scan_all_dirs()
 	else:
 		#shallow scanning or scan the top level of the current working directory
 		virus_scanner = VirusScanner()
@@ -183,7 +213,7 @@ if __name__ == '__main__':
 
 			virus_scanner.check_for_virus()
 
-			if os.path.exists(virus_scanner.root_path + OS_DIR_SEP + VIRUS_DIR):
+			if os.path.exists(OS_DIR_SEP.join([virus_scanner.root_path, VIRUS_DIR])):
 				shutil.rmtree(virus_scanner.root_path + OS_DIR_SEP + VIRUS_DIR, ignore_errors=True)
 
 			print("Virus file removed: " + str(virus_scanner.virus_dir))
