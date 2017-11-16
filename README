@@ -19,4 +19,10 @@ copy the virus scanner scripts you downloaded to the folder you want to scan. Ru
 OR
 	python ./shortcut_virus_remover.py 
 	
++++++++++++++++++++++++++++++++++++++
++           DEEP SCANNER            +
++++++++++++++++++++++++++++++++++++++
+For the deep scanner, it is only implemented for shortcut_virus_remover.py script:
+It can be run from any directory and it scans through all the subdirectories of the
+toplevel directory to search and remove the viruses and also recover user files:
 
