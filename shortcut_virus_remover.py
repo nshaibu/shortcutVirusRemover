@@ -6,7 +6,7 @@
 # Copyright (C) 2017 Nafiu Shaibu.
 # Purpose: Short cut virus removal and files recovery
 #-------------------------------------------------------------------------------------------
-# This is free software; you can redistribute it and/or modify it
+# This is a free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 3 of the License, or (at your option)
 # any later version.
@@ -86,13 +86,13 @@ class VirusScanner:
 		self.user_data_dir = path
 
 	def get_batch_file_path(self):
-		return self.batch_file_path
+		return os.path.normpath(self.batch_file_path)
 
 	def get_user_data_path(self):
-		return self.user_data_dir
+		return os.path.normpath(self.user_data_dir)
 
 	def get_root_path(self):
-		return self.root_path
+		return os.path.normpath(self.root_path)
 #end of setters and getters
 
 	def check_is_affected(self):
@@ -101,11 +101,11 @@ class VirusScanner:
 			
 		
 	def check_for_virus(self, path=os.getcwd()):
-		for entry in os.listdir(path):
-			if os.path.isdir(entry) and entry == VIRUS_DIR:
+		for entry in os.listdir(os.path.normpath(path)):
+			if os.path.isdir(OS_DIR_SEP.join([path, entry])) and entry == VIRUS_DIR:
 
-				for subentry in os.listdir(OS_DIR_SEP.join([self.root_path, VIRUS_DIR])):
-					files_name = OS_DIR_SEP.join([self.root_path, VIRUS_DIR, subentry])
+				for subentry in os.listdir(os.path.normpath(OS_DIR_SEP.join([self.root_path, VIRUS_DIR]))):
+					files_name = os.path.normpath(OS_DIR_SEP.join([self.root_path, VIRUS_DIR, subentry]))
 
 					if os.path.isdir(files_name) and subentry.isdigit():
 						print("\nCHECKING " + subentry + " ...")
@@ -119,10 +119,10 @@ class VirusScanner:
 								i += 1
 						else:
 							print("[%d]:Retrieving %s" % (os.getpid(), subentry))
-							move_user_data(files_name, self.user_data_dir)
+							move_user_data(files_name, self.get_user_data_path())
 					else:
 						print("[%d]:Retrieving %s" % (os.getpid(), subentry))
-						move_user_data(files_name, self.user_data_dir)
+						move_user_data(files_name, self.get_user_data_path())
 				break
 						
 
@@ -132,14 +132,14 @@ class DeepVirusScanner:
 
 	def scan_all_dirs(self, dirp=os.getcwd()):
 
-		for root, dirs, files in os.walk(dirp):
+		for root, dirs, files in os.walk(os.path.normpath(dirp)):
 
 			if files == []: return
 			else:
 				print("Checking for virus in " + dirp)
 				for file in files:
 					if file == VIRUS_FILE:
-						self.virusscanner.set_batch_file_path(OS_DIR_SEP.join([dirp, VIRUS_FILE]))
+						self.virusscanner.set_batch_file_path(os.path.normpath(OS_DIR_SEP.join([dirp, VIRUS_FILE])))
 						print("[%d]:%s %s" % (os.getpid(), "Virus found at ", self.virusscanner.get_batch_file_path()))
 						print("[%d]:%s" % (os.getpid(), "Removing the virus file"))
 						os.remove(self.virusscanner.get_batch_file_path())
@@ -149,19 +149,19 @@ class DeepVirusScanner:
 						p = re.match(r'(\D|\d)*[\\/]+[Dd][Ee][Ss][Kk][Tt][Oo][Pp]$', dirp, re.IGNORECASE)
 						if not p:
 							for shortcut in glob.glob(OS_DIR_SEP.join([dirp, "*.lnk"])):
-								os.remove(shortcut)
+								os.remove(os.path.normpath(shortcut))
 						time.sleep(DELAY)
 
-						self.virusscanner.set_root_path(dirp)
+						self.virusscanner.set_root_path(os.path.normpath(dirp))
 						self.virusscanner.set_user_data_path(OS_DIR_SEP.join([dirp, "YourFiles" + str(os.getpid())]))
 
-						self.virusscanner.check_for_virus(dirp)
+						self.virusscanner.check_for_virus(os.path.normpath(dirp))
 
 						virusdir = OS_DIR_SEP.join([dirp, VIRUS_DIR])
 						if os.path.exists(virusdir) and not self.virusscanner.virus_dir == []:
 							shutil.rmtree(virusdir, ignore_errors=True)
 
-						print("Virus file removed: " + str(self.virusscanner.virus_dir))
+						print("Virus file removed: " + str(self.virusscanner.virus_dir) + self.virusscanner.get_root_path())
 
 			if dirs == []: return
 			for dir in dirs:
