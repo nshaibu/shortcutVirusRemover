@@ -5,7 +5,7 @@ Wed 15 Nov 2017 12:47:46 AM GMT
 +       SHORTCUT VIRUS REMOVER         +
 ++++++++++++++++++++++++++++++++++++++++
 These scripts retrieve user files and folders and remove shortcut virus from external drives 
-like pendrives. The signature of the shortcut virus it removes is that the virus 
+like pendrives. The signature of the shortcut virus (it removes) is that the virus 
 creates a batch script in the folder it affects and converts everything in the folder 
 it affects into a shortcut. This virus takes the advantage of windows autorun or autoplay
 to affects external drives. This virus affects computers when an infected drive is inserted 
@@ -24,7 +24,7 @@ directory to that folder and run the command:
 
 However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py. 
 From the terminal change and copy the virus scanner scripts you downloaded to the folder 
-you want to scan. Run either of this commands:
+you want to scan. Run either of these commands:
 		
 		$CMD_PROMPT> sh ./shortcut_virus_remover.sh 
 				<--OR-->
