@@ -23,7 +23,7 @@
 
 import os, sys, time
 import re, glob, platform
-import sys, shutil
+import sys, shutil, getopt
 
 VIRUS_DIR = "Drive"
 VIRUS_FILE = "Drive.bat"
@@ -172,56 +172,108 @@ class DeepVirusScanner:
 
 
 
+def main(argv):
+	if len(argv) > 1:
+		var_path = ""
+		var_scantype = ""
+
+		try:
+			opts, args = getopt.getopt(argv[1:], "hp:s:",["help", "path=", "scantype="])
+		except getopt.GetoptError:
+			print("%s" % (" ".join([argv[0], "[-hpd]"])))
+			sys.exit(20)
+
+		for opt, arg in opts:
+			if opt in ("-h", "--help"):
+				print(""" 
+Usage: shortcut_virus_remover.py [-h] [-p path] [-s type]
+--help,     -h                :Print this help message and exit
+--path,     -p <directory>    :Specify the directory to scan
+--scantype, -s [shallow|deep] :Specify the type of scanning to perform[shallow|deep
+				""")
+			elif opt in ("-p", "--path"):
+				print(arg)
+				if not validate_dir_path(arg):
+					os_type = platform.system()
+					if os_type == 'Linux':
+						print(r"ERROR:The directory format is wrong [Note:/home/other_dir]")
+						sys.exit(21)
+					elif os_type == 'Windows':
+						print(r"ERROR:The directory format is wrong [Note:C:\Users\other_dir")
+						sys.exit(21)
+				if not os.path.exists(arg):
+					print(r"ERROR:Specified path does not exist")
+					sys.exit(22)
+				else:
+					var_path = os.path.normpath(arg)
+
+			elif opt in ("-s", "--scantype"):
+				if not arg.lower() in ("shallow", "deep"):
+					print(r"ERROR:Scan type can only be [shallow|deep]!!!")
+					sys.exit(23)
+				else:
+					var_scantype = arg.lower()
+		if var_scantype:
+			if var_scantype == "deep":
+				deep_scanner = DeepVirusScanner()
+				deep_scanner.scan_all_dirs(var_path)
+			else:
+				shallow_scanner = VirusScanner()
+				shallow_scanner.check_for_virus(var_path)
+
+			return
+
+	else: #Interractive scanning
+		prompt = str(input("\n\nDo you want a deep scanning of your device[y[N]]? "))
+		if not prompt == "" and prompt.upper()[0] == "Y":
+			deep_scanner = DeepVirusScanner()
+			var = ""
+
+			while True:
+				var=str(input("Enter the path to the directory you want to scan\n[[ENTER] for current directory]: "))
+				if validate_dir_path(var): break
+
+			if not var == "": deep_scanner.scan_all_dirs(os.path.normpath(var))
+			else: deep_scanner.scan_all_dirs()
+		else:
+			#shallow scanning or scan the top level of the current working directory
+			virus_scanner = VirusScanner()
+
+			if virus_scanner.check_is_affected():
+				print("\n\nDRIVE INFECTED WITH SHORTCUT VIRUS!!!")
+				time.sleep(1)
+
+				print("\n[%d]:%s" % (os.getpid(), "Removing shortcuts ..."))
+				for entry in glob.glob("*.lnk"):
+					os.remove(entry)
+
+				print("[%d]:%s" % (os.getpid(), " ".join(["Removing ", virus_scanner.get_batch_file_path(), " ..."])))
+				os.remove(virus_scanner.batch_file_path)
+				time.sleep(DELAY)
+
+				print("[%d]:%s" % (os.getpid(), "Creating folder " + virus_scanner.user_data_dir + "..."))
+				if not os.path.exists(virus_scanner.user_data_dir):
+					os.makedirs(virus_scanner.user_data_dir)
+				time.sleep(DELAY)
+				print("[%d]:%s" % (os.getpid(), "Your recovered files will be saved at " + virus_scanner.user_data_dir + "..."))
+				time.sleep(DELAY)
+
+				virus_scanner.check_for_virus()
+
+				if os.path.exists(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR])):
+					shutil.rmtree(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR]), ignore_errors=True)
+
+				print("Virus file removed: " + str(virus_scanner.virus_dir))
+			else:
+				print("\n\nDRIVE NOT INFECTED")
+
+	input("Press Enter to exit")
+	return
+
 if __name__ == '__main__':
 	try:
 		print(info_b.decode("utf-32"))
 	except:
 		pass
-
-	prompt = str(input("\n\nDo you want a deep scanning of your device[y[N]]? "))
-	if not prompt == "" and prompt.upper()[0] == "Y":
-		deep_scanner = DeepVirusScanner()
-		var = ""
-
-		while True:
-			var=str(input("Enter the path to the directory you want to scan[[ENTER] for current directory]: "))
-			if validate_dir_path(var): break
-
-		if var:
-			deep_scanner.scan_all_dirs(var)
-		else:
-			deep_scanner.scan_all_dirs()
-	else:
-		#shallow scanning or scan the top level of the current working directory
-		virus_scanner = VirusScanner()
-
-		if virus_scanner.check_is_affected():
-			print("\n\nDRIVE INFECTED WITH SHORTCUT VIRUS!!!")
-			time.sleep(1)
-
-			print("\n[%d]:%s" % (os.getpid(), "Removing shortcuts ..."))
-			for entry in glob.glob("*.lnk"):
-				os.remove(entry)
-
-			print("[%d]:%s" % (os.getpid(), " ".join(["Removing ", virus_scanner.get_batch_file_path(), " ..."])))
-			os.remove(virus_scanner.batch_file_path)
-			time.sleep(DELAY)
-
-			print("[%d]:%s" % (os.getpid(), "Creating folder " + virus_scanner.user_data_dir + "..."))
-			if not os.path.exists(virus_scanner.user_data_dir):
-				os.makedirs(virus_scanner.user_data_dir)
-			time.sleep(DELAY)
-			print("[%d]:%s" % (os.getpid(), "Your recovered files will be saved at " + virus_scanner.user_data_dir + "..."))
-			time.sleep(DELAY)
-
-			virus_scanner.check_for_virus()
-
-			if os.path.exists(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR])):
-				shutil.rmtree(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR]), ignore_errors=True)
-
-			print("Virus file removed: " + str(virus_scanner.virus_dir))
-		else:
-			print("\n\nDRIVE NOT INFECTED")
-
-	input("Press Enter to exit")
+	main(sys.argv)
 	sys.exit(0)
