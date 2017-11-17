@@ -1,10 +1,14 @@
+Copyright (C) 2017 Nafiu Shaibu [github/nshaibu].
+Wed 15 Nov 2017 12:47:46 AM GMT
+
 ++++++++++++++++++++++++++++++++++++++++
 +       SHORTCUT VIRUS REMOVER         +
 ++++++++++++++++++++++++++++++++++++++++
 These scripts retrieve user files and folders and remove shortcut virus from external 
-devices like pendrives. The signature for the shortcut virus it removes is that the 
+and internal drives like pendrives. The signature for the shortcut virus it removes is that the 
 virus creates a batch script in the folder it affects and converts everything in the 
-folder it affects into a shortcut.
+folder it affects into a shortcut. This virus is based on windows autorun feature to affects
+external drives
 
 
 ++++++++++++++++++++++
@@ -14,15 +18,15 @@ To remove the shortcut virus in a folder. Download the scripts and if you are on
 copy shortcut_virus_remover.py into the folder and click on it or using the CMD change 
 directory to that folder and run the command:
 		
-		python shortcut_virus_remover.py 
+		$CMD_PROMPT> python shortcut_virus_remover.py 
 
 However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py. 
 From the terminal change and copy the virus scanner scripts you downloaded to the folder 
 you want to scan. Run either of this commands:
 		
-		sh ./shortcut_virus_remover.sh 
+		$CMD_PROMPT> sh ./shortcut_virus_remover.sh 
 				<--OR-->
-		python ./shortcut_virus_remover.py 
+		$CMD_PROMPT> python ./shortcut_virus_remover.py 
 
 	
 +++++++++++++++++++++++++++++++++++++

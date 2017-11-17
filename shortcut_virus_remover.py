@@ -161,11 +161,11 @@ class DeepVirusScanner:
 						if os.path.exists(virusdir) and not self.virusscanner.virus_dir == []:
 							shutil.rmtree(virusdir, ignore_errors=True)
 
-						print("Virus file removed: " + str(self.virusscanner.virus_dir) + self.virusscanner.get_root_path())
+						print("Virus file removed: " + str(self.virusscanner.virus_dir))
 
 			if dirs == []: return
-			for dir in dirs:
-				self.scan_all_dirs(os.path.join(root, dir))
+			for dir_ in dirs:
+				self.scan_all_dirs(os.path.join(root, dir_))
 
 
 
@@ -176,15 +176,15 @@ if __name__ == '__main__':
 		pass
 
 	prompt = str(input("\n\nDo you want a deep scanning of your device[y[N]]? "))
-	if prompt.upper()[0] == "Y":
+	if not prompt == "" and prompt.upper()[0] == "Y":
 		deep_scanner = DeepVirusScanner()
-		var = None
+		var = ""
 
 		while True:
-			var=str(input("Enter the path to the directory you want to scan[ENTER for current directory]: "))
+			var=str(input("Enter the path to the directory you want to scan[[ENTER] for current directory]: "))
 			if validate_dir_path(var): break
 
-		if not var == "":
+		if var:
 			deep_scanner.scan_all_dirs(var)
 		else:
 			deep_scanner.scan_all_dirs()
@@ -213,8 +213,8 @@ if __name__ == '__main__':
 
 			virus_scanner.check_for_virus()
 
-			if os.path.exists(OS_DIR_SEP.join([virus_scanner.root_path, VIRUS_DIR])):
-				shutil.rmtree(virus_scanner.root_path + OS_DIR_SEP + VIRUS_DIR, ignore_errors=True)
+			if os.path.exists(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR])):
+				shutil.rmtree(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR]), ignore_errors=True)
 
 			print("Virus file removed: " + str(virus_scanner.virus_dir))
 		else:
