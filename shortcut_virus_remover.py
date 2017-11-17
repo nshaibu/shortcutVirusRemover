@@ -138,11 +138,14 @@ class DeepVirusScanner:
 			else:
 				print("Checking for virus in " + dirp)
 				for file in files:
-					if file == VIRUS_FILE:
+					if file == VIRUS_FILE or os.path.isdir(os.path.normpath(OS_DIR_SEP.join([dirp, VIRUS_DIR]))):
 						self.virusscanner.set_batch_file_path(os.path.normpath(OS_DIR_SEP.join([dirp, VIRUS_FILE])))
 						print("[%d]:%s %s" % (os.getpid(), "Virus found at ", self.virusscanner.get_batch_file_path()))
 						print("[%d]:%s" % (os.getpid(), "Removing the virus file"))
-						os.remove(self.virusscanner.get_batch_file_path())
+						try:
+							os.remove(self.virusscanner.get_batch_file_path())
+						except:
+							pass
 						time.sleep(DELAY)
 
 						print("[%d]:%s" % (os.getpid(), "Removing shortcuts"))
