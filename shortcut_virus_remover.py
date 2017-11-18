@@ -180,7 +180,7 @@ def main(argv):
 		try:
 			opts, args = getopt.getopt(argv[1:], "hp:s:",["help", "path=", "scantype="])
 		except getopt.GetoptError:
-			print("%s" % (" ".join([argv[0], "[-hpd]"])))
+			print("%s" % (" ".join([argv[0], "[-hps]"])))
 			sys.exit(20)
 
 		for opt, arg in opts:
