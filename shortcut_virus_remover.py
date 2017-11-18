@@ -187,12 +187,16 @@ def main(argv):
 			if opt in ("-h", "--help"):
 				print(""" 
 Usage: shortcut_virus_remover.py [-h] [-p path] [-s type]
---help,     -h                :Print this help message and exit
---path,     -p <directory>    :Specify the directory to scan
---scantype, -s [shallow|deep] :Specify the type of scanning to perform[shallow|deep
+--help,     -h                :Print this help message and exit.
+--path,     -p <directory>    :Specify the directory to scan.
+--scantype, -s [shallow|deep] :Specify the type of scanning to perform.
                shallow        :only scan the toplevel of the specified directory
                deep           :Scan the toplevel and all subdirectory of the 
                                specified directory.
+
+Your can also run shortcut_virus_remover.py without any option. This will put
+you in an interractive mode and it will allow you to set all the required 
+parameters.
 				""")
 			elif opt in ("-p", "--path"):
 				print(arg)
