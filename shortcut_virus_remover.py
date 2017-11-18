@@ -73,8 +73,7 @@ class VirusScanner:
 		self.user_data_dir = OS_DIR_SEP.join([str(self.root_path), "YourFiles" + str(os.getpid())])
 		
 	def set_root_path(self, path):
-		if not os.path.isdir(path):
-			return False
+		if not os.path.isdir(path): return False
 		else:
 			self.root_path = path
 			return True
