@@ -24,12 +24,17 @@
 import os, sys, time
 import re, glob, platform
 import sys, shutil, getopt
+import subprocess
 
 VIRUS_DIR = "Drive"
 VIRUS_FILE = "Drive.bat"
 DELAY = 0.2
 OS_DIR_SEP = os.sep
 
+try: PID = os.getpid()
+except: PID = -20
+
+windows_cmd = ["attrib", "-r", "-a", "-h", "/s", "/d"]
 info_b = b'\xff\xfe\x00\x00C\x00\x00\x00o\x00\x00\x00p\x00\x00\x00y\x00\x00\x00r\x00\x00\x00i\x00\x00\x00g\x00\x00\x00h\x00\x00\x00t\x00\x00\x00 \x00\x00\x00(\x00\x00\x00C\x00\x00\x00)\x00\x00\x00 \x00\x00\x002\x00\x00\x000\x00\x00\x001\x00\x00\x007\x00\x00\x00 \x00\x00\x00N\x00\x00\x00a\x00\x00\x00f\x00\x00\x00i\x00\x00\x00u\x00\x00\x00 \x00\x00\x00S\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00[\x00\x00\x00g\x00\x00\x00i\x00\x00\x00t\x00\x00\x00h\x00\x00\x00u\x00\x00\x00b\x00\x00\x00.\x00\x00\x00c\x00\x00\x00o\x00\x00\x00m\x00\x00\x00/\x00\x00\x00n\x00\x00\x00s\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00]\x00\x00\x00.\x00\x00\x00'
 
 
@@ -57,20 +62,22 @@ def find_file(fname, dir_path):
 	else:
 		return None
 
-def move_user_data(dataTomove, userdir):
+def move_user_data(dataTomove, userdir, _file_):
 	if not os.path.exists(userdir):
 		os.makedirs(userdir)
 	try:
 		shutil.move(dataTomove, userdir)
 	except:
-		print("Cannot retrieve : " + dataTomove + "...")
+		_file_.append(dataTomove)
 
 class VirusScanner:
 	def __init__(self):
 		self.root_path = os.getcwd()
 		self.batch_file_path = None
+		self.virus_files = list()
 		self.virus_dir = list()
-		self.user_data_dir = OS_DIR_SEP.join([str(self.root_path), "YourFiles" + str(os.getpid())])
+		self.files_not_retrived = list()
+		self.user_data_dir = OS_DIR_SEP.join([str(self.root_path), "YourFiles" + str(PID)])
 		
 	def set_root_path(self, path):
 		if not os.path.isdir(path): return False
@@ -114,14 +121,15 @@ class VirusScanner:
 						if files_in_dir:
 							while i < len(files_in_dir):
 								if re.match(r'\D*\.js$', files_in_dir[i], re.IGNORECASE):
-									self.virus_dir.append(files_in_dir[i])
+									self.virus_files.append(files_in_dir[i])
+									self.virus_dir.append(OS_DIR_SEP.join([files_name, files_in_dir[i]]))
 								i += 1
 						else:
-							print("[%d]:Retrieving %s" % (os.getpid(), subentry))
-							move_user_data(files_name, self.get_user_data_path())
+							print("[%d]:Retrieving %s" % (PID, subentry))
+							move_user_data(files_name, self.get_user_data_path(), self.files_not_retrived)
 					else:
-						print("[%d]:Retrieving %s" % (os.getpid(), subentry))
-						move_user_data(files_name, self.get_user_data_path())
+						print("[%d]:Retrieving %s" % (PID, subentry))
+						move_user_data(files_name, self.get_user_data_path(), self.files_not_retrived)
 				break
 						
 
@@ -139,15 +147,15 @@ class DeepVirusScanner:
 				for file in files:
 					if file == VIRUS_FILE or os.path.isdir(os.path.normpath(OS_DIR_SEP.join([dirp, VIRUS_DIR]))):
 						self.virusscanner.set_batch_file_path(os.path.normpath(OS_DIR_SEP.join([dirp, VIRUS_FILE])))
-						print("[%d]:%s %s" % (os.getpid(), "Virus found at ", self.virusscanner.get_batch_file_path()))
-						print("[%d]:%s" % (os.getpid(), "Removing the virus file"))
+						print("[%d]:%s %s" % (PID, "Virus found at ", self.virusscanner.get_batch_file_path()))
+						print("[%d]:%s" % (PID, "Removing the virus file"))
 						try:
 							os.remove(self.virusscanner.get_batch_file_path())
 						except:
 							pass
 						time.sleep(DELAY)
 
-						print("[%d]:%s" % (os.getpid(), "Removing shortcuts"))
+						print("[%d]:%s" % (PID, "Removing shortcuts"))
 						p = re.match(r'(\D|\d)*[\\/]+[Dd][Ee][Ss][Kk][Tt][Oo][Pp]$', dirp, re.IGNORECASE)
 						if not p:
 							for shortcut in glob.glob(OS_DIR_SEP.join([dirp, "*.lnk"])):
@@ -155,15 +163,43 @@ class DeepVirusScanner:
 						time.sleep(DELAY)
 
 						self.virusscanner.set_root_path(os.path.normpath(dirp))
-						self.virusscanner.set_user_data_path(OS_DIR_SEP.join([dirp, "YourFiles" + str(os.getpid())]))
+						self.virusscanner.set_user_data_path(OS_DIR_SEP.join([dirp, "YourFiles" + str(PID)]))
 
 						self.virusscanner.check_for_virus(os.path.normpath(dirp))
 
 						virusdir = OS_DIR_SEP.join([dirp, VIRUS_DIR])
-						if os.path.exists(virusdir) and not self.virusscanner.virus_dir == []:
-							shutil.rmtree(virusdir, ignore_errors=True)
+						if os.path.exists(virusdir) and not self.virusscanner.virus_files == []:
+							try:
+								if not self.virusscanner.files_not_retrived == []: raise OSError("Files not retrieved")
+								
+								try: shutil.rmtree(virusdir, ignore_errors=True)
+								except: pass
+							except OSError as e:
+								'''
+									Ensuring the safety critical such that user files are
+									not deleted mistakenly. That is if it fails to retrieve
+									all user files it backtrack into this level.
+								'''
+								print("[%d]%s" % (PID, ": ".join([e, str(self.virusscanner.files_not_retrived)])))
 
-						print("Virus file removed: " + str(self.virusscanner.virus_dir))
+								if platform.system() == "Windows":
+									print("[%d]:%s" % (PID, "Changing the virus directory attributes"))
+
+									try:
+										windows_cmd.append(virusdir)
+										subprocess.check_call(windows_cmd)
+										windows_cmd.pop()
+									except subprocess.CalledProcessError as e:
+										print("ERROR: Failed to start process errcode=%d" % e )
+
+								print("[%d]: %s" % (PID, "Removing virus traces ..."))
+								for fpath in self.virusscanner.virus_dir:
+									try: os.unlink(fpath)
+									except: pass
+
+								os.rename(OS_DIR_SEP.join([dirp, VIRUS_DIR]), self.virusscanner.get_user_data_path())
+
+						print("Virus file removed: " + str(self.virusscanner.virus_files))
 
 			if dirs == []: return
 			for dir_ in dirs:
@@ -249,19 +285,19 @@ parameters.
 				print("\n\nDRIVE INFECTED WITH SHORTCUT VIRUS!!!")
 				time.sleep(1)
 
-				print("\n[%d]:%s" % (os.getpid(), "Removing shortcuts ..."))
+				print("\n[%d]:%s" % (PID, "Removing shortcuts ..."))
 				for entry in glob.glob("*.lnk"):
 					os.remove(entry)
 
-				print("[%d]:%s" % (os.getpid(), " ".join(["Removing ", virus_scanner.get_batch_file_path(), " ..."])))
+				print("[%d]:%s" % (PID, " ".join(["Removing ", virus_scanner.get_batch_file_path(), " ..."])))
 				os.remove(virus_scanner.batch_file_path)
 				time.sleep(DELAY)
 
-				print("[%d]:%s" % (os.getpid(), "Creating folder " + virus_scanner.user_data_dir + "..."))
+				print("[%d]:%s" % (PID, "Creating folder " + virus_scanner.user_data_dir + "..."))
 				if not os.path.exists(virus_scanner.user_data_dir):
 					os.makedirs(virus_scanner.user_data_dir)
 				time.sleep(DELAY)
-				print("[%d]:%s" % (os.getpid(), "Your recovered files will be saved at " + virus_scanner.user_data_dir + "..."))
+				print("[%d]:%s" % (PID, "Your recovered files will be saved at " + virus_scanner.user_data_dir + "..."))
 				time.sleep(DELAY)
 
 				virus_scanner.check_for_virus()
@@ -269,7 +305,7 @@ parameters.
 				if os.path.exists(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR])):
 					shutil.rmtree(OS_DIR_SEP.join([virus_scanner.get_root_path(), VIRUS_DIR]), ignore_errors=True)
 
-				print("Virus file removed: " + str(virus_scanner.virus_dir))
+				print("Virus file removed: " + str(virus_scanner.virus_files))
 			else:
 				print("\n\nDRIVE NOT INFECTED")
 
