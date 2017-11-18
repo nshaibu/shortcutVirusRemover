@@ -190,6 +190,9 @@ Usage: shortcut_virus_remover.py [-h] [-p path] [-s type]
 --help,     -h                :Print this help message and exit
 --path,     -p <directory>    :Specify the directory to scan
 --scantype, -s [shallow|deep] :Specify the type of scanning to perform[shallow|deep
+               shallow        :only scan the toplevel of the specified directory
+               deep           :Scan the toplevel and all subdirectory of the 
+                               specified directory.
 				""")
 			elif opt in ("-p", "--path"):
 				print(arg)

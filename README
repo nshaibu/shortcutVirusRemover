@@ -20,15 +20,21 @@ the USB device to display icons of the files on the drive.
 ++++++++++++++++++++++
 +       USAGE        +
 ++++++++++++++++++++++
-To remove the shortcut virus in a folder. Download the scripts and if you are on windows
-copy shortcut_virus_remover.py into the folder and click on it or using the CMD change 
-directory to that folder and run the command:
-		
-		$CMD_PROMPT> python shortcut_virus_remover.py 
+[WARNING]Because of the way the shortcut virus infects computers, it is advisable to disable autorun
+[WARNING]on your windows PC before you inserted the infected USB storage(like pendrives). 
+[WARNING]Again, do not open your drive manually on your PC until you have scanned it with [shortcut_virus_remover.py].
 
-However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py. 
-From the terminal change and copy the virus scanner scripts you downloaded to the folder 
-you want to scan. Run either of these commands:
+Note the path to your drive without opening it. Then either click on [shortcut_virus_remover.py] or 
+start your CMD and then run the [shortcut_virus_remover.py] as show below:
+		
+		CMD_PROMPT> python shortcut_virus_remover.py --path=<path to your drive> --scantype=[deep|shallow]
+								<--OR-->
+		CMD_PROMPT> python shortcut_virus_remover.py -p <path to your drive> -s [shallow|deep]
+
+If you click on [shortcut_virus_remover.py], it will open a CMD window. Fill in the 
+the needed requirements and press [ENTER].
+
+However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py: 
 		
 		$CMD_PROMPT> sh ./shortcut_virus_remover.sh 
 				<--OR-->
