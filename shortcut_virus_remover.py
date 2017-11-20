@@ -24,7 +24,20 @@
 import os, sys, time
 import re, glob, platform
 import sys, shutil, getopt
-import subprocess
+import subprocess, string
+import threading
+import logging as logs
+
+if platform.system() == "Windows":
+	try:
+		from ctypes import windll
+	except:
+		pass
+elif platform.system() == "Linux":
+	try:
+		import pyudev
+	except:
+		pass
 
 VIRUS_DIR = "Drive"
 VIRUS_FILE = "Drive.bat"
@@ -34,11 +47,12 @@ OS_DIR_SEP = os.sep
 try: PID = os.getpid()
 except: PID = -20
 
+
 windows_cmd = ["attrib", "-r", "-a", "-h", "/s", "/d"]
 info_b = b'\xff\xfe\x00\x00C\x00\x00\x00o\x00\x00\x00p\x00\x00\x00y\x00\x00\x00r\x00\x00\x00i\x00\x00\x00g\x00\x00\x00h\x00\x00\x00t\x00\x00\x00 \x00\x00\x00(\x00\x00\x00C\x00\x00\x00)\x00\x00\x00 \x00\x00\x002\x00\x00\x000\x00\x00\x001\x00\x00\x007\x00\x00\x00 \x00\x00\x00N\x00\x00\x00a\x00\x00\x00f\x00\x00\x00i\x00\x00\x00u\x00\x00\x00 \x00\x00\x00S\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00[\x00\x00\x00g\x00\x00\x00i\x00\x00\x00t\x00\x00\x00h\x00\x00\x00u\x00\x00\x00b\x00\x00\x00.\x00\x00\x00c\x00\x00\x00o\x00\x00\x00m\x00\x00\x00/\x00\x00\x00n\x00\x00\x00s\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00]\x00\x00\x00.\x00\x00\x00'
 
-
 def validate_dir_path(dir_path):
+	'''Validate the directory path'''
 	if dir_path == "":
 		return True
 	else:
@@ -48,10 +62,26 @@ def validate_dir_path(dir_path):
 		elif os_type == "Windows":
 			return re.match(r'^\D:\\(\D|\d)*', dir_path) != None
 
+def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
+	'''remove auto run virus for drives'''
+	autorun_viruses = ["Ravmon.exe", "ntdelect.com", "New Folder.exe", "kavo.exe", "svchost.exe", "autorun.inf"]
+
+	ppath = os.path.normpath(path)
+	if os.path.isfile(ppath):
+		basename = shutil._basename(ppath)
+		try:
+			autorun_viruses.index(basename)
+		except ValueError:
+			return
+
+		try: os.unlink(ppath)
+		except:
+			virus_not_removed_list.append(ppath)
+
 
 def find_file(fname, dir_path):
 	file_path = list()
-	
+
 	for files in os.listdir(dir_path):
 		if fname in files:
 			file_path.append(dir_path)
@@ -62,6 +92,7 @@ def find_file(fname, dir_path):
 	else:
 		return None
 
+
 def move_user_data(dataTomove, userdir, _file_):
 	if not os.path.exists(userdir):
 		os.makedirs(userdir)
@@ -69,6 +100,118 @@ def move_user_data(dataTomove, userdir, _file_):
 		shutil.move(dataTomove, userdir)
 	except:
 		_file_.append(dataTomove)
+
+class RealTimeScanner(threading.Thread):
+	'''This class creates a thread to handle any usb device inserted'''
+	
+	def __init__(self, thid, drive_name, drive_list, lockdatastruct):
+		threading.Thread.__init__(self)
+		self.threadId = thid
+		#self.ThreadName = thname
+		self.param = (drive_name, drive_list, lockdatastruct)
+
+		self.deepScanner = DeepVirusScanner()
+		self.shallowScanner = VirusScanner()
+
+	#def set_name(self, name):
+	#	self.ThreadName = thid
+
+	#def get_name(self):
+	#	return self.ThreadName
+		
+	def run(self):
+		num_times_run = 0
+
+		while True:
+			if self.param.__len__() != 3: return
+			drive = self.param[0]
+			drive_lt = self.param[1]
+			lockstruct = self.param[2]
+
+			#lockstruct.acquire(blocking=1)
+			#bool_var =
+			#lockstruct.release()
+
+			if drive in drive_lt:
+				if num_times_run == 0:
+					try:
+						self.deepScanner.scan_all_dirs(drive, enableautovirusscan=True)
+						if not self.deepScanner.is_all_virus_removed():
+							logs.critical(" ".join(["These files are suspicion", str(self.deepScanner.get_virus_not_removed())] ))
+							self.deepScanner.get_virus_not_removed().clear()
+					except: 
+						return
+				else:
+					try: self.shallowScanner.check_for_virus(drive)
+					except: return
+			else:
+				return
+			time.sleep(60)
+			num_times_run += 1
+
+
+class USBDeviceDetectionAndProtection:
+	def __init__(self):
+		self.drives = list()      #All drives inserted
+		self.drive_added = list() #All recent drives inserted
+
+		self.threadLock = threading.Lock()
+		self.threadList = list()
+
+		logs.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", filename="my.log", level=logs.DEBUG)
+
+	def getSize(self):
+		'''get number of drives attached'''
+		return self.drives.__len__()
+
+	def getdrives(self):
+		'''check for usb drive to system'''
+
+		if platform.system() == "Windows":
+			mask = windll.kernel32.GetLogicalDrives()
+			for driv_letter in string.uppercase:
+				if mask & 1: self.drives.append(driv_letter)
+				mask >>= 1
+
+		elif platform.system() == "Linux":
+			context = pyudev.Context()
+			monitor = pyudev.Monitor.from_netlink(context)
+			monitor.filter_by(subsystem="usb")
+
+			for device in iter(monitor.poll, None):
+				if device.action == 'add':
+					#print('{} connected'.format(device))
+					self.drives.append(device)
+
+		return self.getSize()
+
+	def poll_on_usbdevices(self, ptime=0.5):
+		'''
+			listen whether new usb device has been attached to
+			the computer system and start a thread to clean
+			it up. The polling waste a lot of cpu time. However,
+			this is what i can implement for now
+		'''
+		prev_len = self.getSize()
+		id = 0
+
+		while True:
+			cond_variable = self.getdrives() - prev_len
+			if cond_variable > 0:
+				'''spawn threads here: get drive letters here'''
+				for index in range(1, cond_variable):
+					try:
+						thread_obj = RealTimeScanner(id, self.drives[self.getSize() + index], self.drives, self.threadLock)
+						thread_obj.start()
+						thread_obj.join()
+						self.threadList.append(thread_obj)
+						id += 1
+					except Exception as e:
+						logs.info(" ".join(["Error occurred while starting thread", str(e.args)]))
+			else:
+				time.sleep(ptime)
+			prev_len = self.getdrives()
+
 
 class VirusScanner:
 	def __init__(self):
@@ -136,8 +279,15 @@ class VirusScanner:
 class DeepVirusScanner:
 	def __init__(self):
 		self.virusscanner = VirusScanner()
+		self.virus_not_removed_list = []      #basic usb viruses not removed
 
-	def scan_all_dirs(self, dirp=os.getcwd()):
+	def get_virus_not_removed(self):
+		return self.virus_not_removed_list
+
+	def is_all_virus_removed(self):
+		return len(self.virus_not_removed_list) == 0
+
+	def scan_all_dirs(self, dirp=os.getcwd(), enableautovirusscan=False):
 
 		for root, dirs, files in os.walk(os.path.normpath(dirp)):
 
@@ -166,6 +316,8 @@ class DeepVirusScanner:
 						self.virusscanner.set_user_data_path(OS_DIR_SEP.join([dirp, "YourFiles" + str(PID)]))
 
 						self.virusscanner.check_for_virus(os.path.normpath(dirp))
+						if enableautovirusscan:
+							usb_autorun_basicvirus_remover(os.path.normpath(dirp), self.virus_not_removed_list)
 
 						virusdir = OS_DIR_SEP.join([dirp, VIRUS_DIR])
 						if os.path.exists(virusdir) and not self.virusscanner.virus_files == []:
@@ -222,27 +374,31 @@ def main(argv):
 			if opt in ("-h", "--help"):
 				print(""" 
 Usage: shortcut_virus_remover.py [-h] [-p path] [-s type]
---help,     -h                :Print this help message and exit.
---path,     -p <directory>    :Specify the directory to scan.
---scantype, -s [shallow|deep] :Specify the type of scanning to perform.
-               shallow        :only scan the toplevel of the specified directory
-               deep           :Scan the toplevel and all subdirectory of the 
-                               specified directory.
+--help,     -h                         :Print this help message and exit.
+--path,     -p <directory>             :Specify the directory to scan.
+--scantype, -s [shallow|deep|realtime] :Specify the type of scanning to perform.
+                              shallow  :only scan the toplevel of the specified 
+                                        directory.
+                              deep     :Scan the toplevel and all subdirectory 
+                                        of the specified directory.
+                              realtime :This mode scan drives automatically and
+                                        in realtime. 
 
 Your can also run shortcut_virus_remover.py without any option. This will put
 you in an interractive mode and it will allow you to set all the required 
 parameters.
 				""")
 			elif opt in ("-p", "--path"):
-				print(arg)
 				if not validate_dir_path(arg):
 					os_type = platform.system()
+
 					if os_type == 'Linux':
 						print(r"ERROR:The directory format is wrong [Note:/home/other_dir]")
 						sys.exit(21)
 					elif os_type == 'Windows':
 						print(r"ERROR:The directory format is wrong [Note:C:\Users\other_dir")
 						sys.exit(21)
+
 				if not os.path.exists(arg):
 					print(r"ERROR:Specified path does not exist")
 					sys.exit(22)
@@ -250,18 +406,26 @@ parameters.
 					var_path = os.path.normpath(arg)
 
 			elif opt in ("-s", "--scantype"):
-				if not arg.lower() in ("shallow", "deep"):
-					print(r"ERROR:Scan type can only be [shallow|deep]!!!")
+				if not arg.lower() in ("shallow", "deep", "realtime"):
+					print(r"ERROR:Scan type can only be [shallow|deep|realtime]!!!")
 					sys.exit(23)
 				else:
 					var_scantype = arg.lower()
+
 		if var_scantype:
-			if var_scantype == "deep":
+			if var_scantype == "deep":                         #### Deep scanning of drives
 				deep_scanner = DeepVirusScanner()
-				deep_scanner.scan_all_dirs(var_path)
-			else:
+				deep_scanner.scan_all_dirs(var_path, enableautovirusscan=True)
+			elif var_scantype == "shallow":                    #### Shallow scanning of drives
 				shallow_scanner = VirusScanner()
 				shallow_scanner.check_for_virus(var_path)
+			else:                                              #### Realtime scanning mode
+				realtime_scanner = USBDeviceDetectionAndProtection()
+				print("[%d]: %s" % (PID, "Listen for usbdevices ..."))
+				try:
+					realtime_scanner.poll_on_usbdevices()
+				except:
+					print("[%d]: %s" % (PID, "Exiting real scanning mode ..."))
 
 			return
 
