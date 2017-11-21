@@ -28,12 +28,14 @@ import subprocess, string
 import threading
 import logging as logs
 
-if platform.system() == "Windows":
+os_type = platform.system()
+
+if os_type == "Windows":
 	try:
 		from ctypes import windll
 	except:
 		pass
-elif platform.system() == "Linux":
+elif os_type == "Linux":
 	try:
 		import pyudev
 	except:
@@ -43,12 +45,13 @@ VIRUS_DIR = "Drive"
 VIRUS_FILE = "Drive.bat"
 DELAY = 0.2
 OS_DIR_SEP = os.sep
+log_filename = OS_DIR_SEP.join([os.getenv('HOME'), "shortcut_virus.log"])
 
 try: PID = os.getpid()
 except: PID = -20
 
 
-windows_cmd = ["attrib", "-r", "-a", "-h", "/s", "/d"]
+windows_cmd = { 'ATTRIB':["attrib", "-r", "-a", "-h", "/s", "/d"], 'KILL':["kill", "/f", "/t", "/im"] }
 info_b = b'\xff\xfe\x00\x00C\x00\x00\x00o\x00\x00\x00p\x00\x00\x00y\x00\x00\x00r\x00\x00\x00i\x00\x00\x00g\x00\x00\x00h\x00\x00\x00t\x00\x00\x00 \x00\x00\x00(\x00\x00\x00C\x00\x00\x00)\x00\x00\x00 \x00\x00\x002\x00\x00\x000\x00\x00\x001\x00\x00\x007\x00\x00\x00 \x00\x00\x00N\x00\x00\x00a\x00\x00\x00f\x00\x00\x00i\x00\x00\x00u\x00\x00\x00 \x00\x00\x00S\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00[\x00\x00\x00g\x00\x00\x00i\x00\x00\x00t\x00\x00\x00h\x00\x00\x00u\x00\x00\x00b\x00\x00\x00.\x00\x00\x00c\x00\x00\x00o\x00\x00\x00m\x00\x00\x00/\x00\x00\x00n\x00\x00\x00s\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00]\x00\x00\x00.\x00\x00\x00'
 
 def validate_dir_path(dir_path):
@@ -56,11 +59,10 @@ def validate_dir_path(dir_path):
 	if dir_path == "":
 		return True
 	else:
-		os_type = platform.system()
 		if os_type == "Linux":
-			return re.match(r'^/(\D|\d)*', dir_path) != None
+			return not re.match(r'^/(\D|\d)*', dir_path) == None
 		elif os_type == "Windows":
-			return re.match(r'^\D:\\(\D|\d)*', dir_path) != None
+			return not re.match(r'^\D:\\(\D|\d)*', dir_path) == None
 
 def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 	'''remove auto run virus for drives'''
@@ -70,9 +72,20 @@ def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 	if os.path.isfile(ppath):
 		basename = shutil._basename(ppath)
 		try:
-			autorun_viruses.index(basename)
+			autorun_viruses.lower().index(basename.lower())
+
+			if os_type == "Windows":
+				windows_cmd['KILL'].append(basename)
+				windows_cmd['KILL'].append(">NULL")
+			
+				subprocess.check_call(windows_cmd['KILL']) # Kill process if running
+			
+				windows_cmd['KILL'].pop()
+				windows_cmd['KILL'].pop()
 		except ValueError:
 			return
+		except subprocess.CalledProcessError:   #can't block deleting the file
+			pass
 
 		try: os.unlink(ppath)
 		except:
@@ -135,7 +148,8 @@ class RealTimeScanner(threading.Thread):
 			if drive in drive_lt:
 				if num_times_run == 0:
 					try:
-						self.deepScanner.scan_all_dirs(drive, enableautovirusscan=True)
+						self.deepScanner.scan_all_dirs(drive, enable_usbbasicvirus_scan=True)
+
 						if not self.deepScanner.is_all_virus_removed():
 							logs.critical(" ".join(["These files are suspicion", str(self.deepScanner.get_virus_not_removed())] ))
 							self.deepScanner.get_virus_not_removed().clear()
@@ -158,7 +172,7 @@ class USBDeviceDetectionAndProtection:
 		self.threadLock = threading.Lock()
 		self.threadList = list()
 
-		logs.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", filename="my.log", level=logs.DEBUG)
+		logs.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", filename=log_filename, level=logs.DEBUG)
 
 	def getSize(self):
 		'''get number of drives attached'''
@@ -167,13 +181,13 @@ class USBDeviceDetectionAndProtection:
 	def getdrives(self):
 		'''check for usb drive to system'''
 
-		if platform.system() == "Windows":
+		if os_type == "Windows":
 			mask = windll.kernel32.GetLogicalDrives()
 			for driv_letter in string.uppercase:
 				if mask & 1: self.drives.append(driv_letter)
 				mask >>= 1
 
-		elif platform.system() == "Linux":
+		elif os_type == "Linux":
 			context = pyudev.Context()
 			monitor = pyudev.Monitor.from_netlink(context)
 			monitor.filter_by(subsystem="usb")
@@ -219,7 +233,7 @@ class VirusScanner:
 		self.batch_file_path = None
 		self.virus_files = list()
 		self.virus_dir = list()
-		self.files_not_retrived = list()
+		self.files_not_retrieved = list()
 		self.user_data_dir = OS_DIR_SEP.join([str(self.root_path), "YourFiles" + str(PID)])
 		
 	def set_root_path(self, path):
@@ -246,7 +260,7 @@ class VirusScanner:
 
 	def check_is_affected(self):
 		self.batch_file_path = find_file(VIRUS_FILE, self.root_path)
-		return self.batch_file_path != None
+		return not self.batch_file_path == None
 			
 		
 	def check_for_virus(self, path=os.getcwd()):
@@ -269,10 +283,10 @@ class VirusScanner:
 								i += 1
 						else:
 							print("[%d]:Retrieving %s" % (PID, subentry))
-							move_user_data(files_name, self.get_user_data_path(), self.files_not_retrived)
+							move_user_data(files_name, self.get_user_data_path(), self.files_not_retrieved)
 					else:
 						print("[%d]:Retrieving %s" % (PID, subentry))
-						move_user_data(files_name, self.get_user_data_path(), self.files_not_retrived)
+						move_user_data(files_name, self.get_user_data_path(), self.files_not_retrieved)
 				break
 						
 
@@ -287,7 +301,7 @@ class DeepVirusScanner:
 	def is_all_virus_removed(self):
 		return len(self.virus_not_removed_list) == 0
 
-	def scan_all_dirs(self, dirp=os.getcwd(), enableautovirusscan=False):
+	def scan_all_dirs(self, dirp=os.getcwd(), enable_usbbasicvirus_scan=False):
 
 		for root, dirs, files in os.walk(os.path.normpath(dirp)):
 
@@ -316,13 +330,13 @@ class DeepVirusScanner:
 						self.virusscanner.set_user_data_path(OS_DIR_SEP.join([dirp, "YourFiles" + str(PID)]))
 
 						self.virusscanner.check_for_virus(os.path.normpath(dirp))
-						if enableautovirusscan:
+						if enable_usbbasicvirus_scan:
 							usb_autorun_basicvirus_remover(os.path.normpath(dirp), self.virus_not_removed_list)
 
 						virusdir = OS_DIR_SEP.join([dirp, VIRUS_DIR])
 						if os.path.exists(virusdir) and not self.virusscanner.virus_files == []:
 							try:
-								if not self.virusscanner.files_not_retrived == []: raise OSError("Files not retrieved")
+								if not self.virusscanner.files_not_retrieved == []: raise OSError("Files not retrieved")
 								
 								try: shutil.rmtree(virusdir, ignore_errors=True)
 								except: pass
@@ -332,15 +346,20 @@ class DeepVirusScanner:
 									not deleted mistakenly. That is if it fails to retrieve
 									all user files it backtrack into this level.
 								'''
-								print("[%d]%s" % (PID, ": ".join([e, str(self.virusscanner.files_not_retrived)])))
+								print("[%d]%s" % (PID, ": ".join([e, str(self.virusscanner.files_not_retrieved)])))
 
-								if platform.system() == "Windows":
+								if os_type == "Windows":
 									print("[%d]:%s" % (PID, "Changing the virus directory attributes"))
 
 									try:
-										windows_cmd.append(virusdir)
-										subprocess.check_call(windows_cmd)
-										windows_cmd.pop()
+										windows_cmd['ATTRIB'].append(virusdir)
+										windows_cmd['ATTRIB'].append(">NUL")
+										
+										subprocess.check_call(windows_cmd['ATTRIB'])
+										
+										windows_cmd['ATTRIB'].pop()
+										windows_cmd['ATTRIB'].pop()
+										
 									except subprocess.CalledProcessError as e:
 										print("ERROR: Failed to start process errcode=%d" % e )
 
@@ -385,7 +404,7 @@ Usage: shortcut_virus_remover.py [-h] [-p path] [-s type]
                                         in realtime. 
 
 Your can also run shortcut_virus_remover.py without any option. This will put
-you in an interractive mode and it will allow you to set all the required 
+you in an interactive mode and it will allow you to set all the required 
 parameters.
 				""")
 			elif opt in ("-p", "--path"):
@@ -415,7 +434,7 @@ parameters.
 		if var_scantype:
 			if var_scantype == "deep":                         #### Deep scanning of drives
 				deep_scanner = DeepVirusScanner()
-				deep_scanner.scan_all_dirs(var_path, enableautovirusscan=True)
+				deep_scanner.scan_all_dirs(var_path, enable_usbbasicvirus_scan=True)
 			elif var_scantype == "shallow":                    #### Shallow scanning of drives
 				shallow_scanner = VirusScanner()
 				shallow_scanner.check_for_virus(var_path)
