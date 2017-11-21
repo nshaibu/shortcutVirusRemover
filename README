@@ -4,13 +4,13 @@ Wed 15 Nov 2017 12:47:46 AM GMT
 ++++++++++++++++++++++++++++++++++++++++
 +       SHORTCUT VIRUS REMOVER         +
 ++++++++++++++++++++++++++++++++++++++++
-These scripts retrieve user files and folders and remove shortcut virus from USB storage drives 
-like pendrives. The signature of the shortcut virus (it removes) is that the virus 
+These scripts retrieve user files and folders and remove shortcut virus from USB storage 
+drives like pendrives. The signature of the shortcut virus (it removes) is that the virus 
 creates a batch script in the folder it affects and converts everything in the folder 
-into a shortcut(ie .lnk file). This virus takes the advantage of windows autorun or autoplay
-feature to spread. The virus affects computers when an infected usb storage drive is inserted 
-into the computer and the user trys to write or read from it. This means that whenever there is either 
-a read or write to the inserted drive the virus script is run. 
+into a shortcut(ie .lnk file). This virus takes the advantage of windows autorun or 
+autoplay feature to spread. The virus affects computers when an infected usb storage drive 
+is inserted into the computer and the user trys to write or read from it. This means that 
+whenever there is either a read or write to the inserted drive the virus script is run. 
 
 So just opening an infected USB storage device using any file manager will get your 
 Computer infected because the file manager has to read the various datastructures on 
@@ -20,9 +20,10 @@ the USB device to display icons of the files on the drive.
 ++++++++++++++++++++++
 +       USAGE        +
 ++++++++++++++++++++++
-[WARNING]Because of the way the shortcut virus infects computers, it is advisable to disable autorun
-[WARNING]on your windows PC before you inserted the infected USB storage(like pendrives). 
-[WARNING]Again, do not open your drive manually on your PC until you have scanned it with [shortcut_virus_remover.py].
+[WARNING] Because of the way the shortcut virus infects computers, it is advisable to 
+[WARNING] disable autorun on your windows PC before you inserted the infected USB 
+[WARNING] storage(like pendrives). Again, do not open your drive manually on your 
+[WARNING] PC until you have scanned it with [shortcut_virus_remover.py].
 
 Note the path to your drive without opening it. Then either click on [shortcut_virus_remover.py] or 
 start your CMD and then run the [shortcut_virus_remover.py] as show below:
