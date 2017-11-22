@@ -38,8 +38,21 @@ if os_type == "Windows":
 elif os_type == "Linux":
 	try:
 		import pyudev
+		import psutil			#partition imports
 	except:
 		pass
+
+	def read_partitions(drive_list=None):
+		drive = []
+		print(drive_list)
+		partitions = psutil.disk_partitions()
+		for part in partitions:
+			if drive_list == None:
+				drive.append(part.mountpoint)
+			elif part.mountpoint not in drive_list:
+				drive.append(part.mountpoint)
+
+		return drive  # return tuple of length and list
 
 VIRUS_DIR = "Drive"
 VIRUS_FILE = "Drive.bat"
@@ -53,6 +66,7 @@ except: PID = -20
 
 windows_cmd = { 'ATTRIB':["attrib", "-r", "-a", "-h", "/s", "/d"], 'KILL':["kill", "/f", "/t", "/im"] }
 info_b = b'\xff\xfe\x00\x00C\x00\x00\x00o\x00\x00\x00p\x00\x00\x00y\x00\x00\x00r\x00\x00\x00i\x00\x00\x00g\x00\x00\x00h\x00\x00\x00t\x00\x00\x00 \x00\x00\x00(\x00\x00\x00C\x00\x00\x00)\x00\x00\x00 \x00\x00\x002\x00\x00\x000\x00\x00\x001\x00\x00\x007\x00\x00\x00 \x00\x00\x00N\x00\x00\x00a\x00\x00\x00f\x00\x00\x00i\x00\x00\x00u\x00\x00\x00 \x00\x00\x00S\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00[\x00\x00\x00g\x00\x00\x00i\x00\x00\x00t\x00\x00\x00h\x00\x00\x00u\x00\x00\x00b\x00\x00\x00.\x00\x00\x00c\x00\x00\x00o\x00\x00\x00m\x00\x00\x00/\x00\x00\x00n\x00\x00\x00s\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00]\x00\x00\x00.\x00\x00\x00'
+
 
 def validate_dir_path(dir_path):
 	'''Validate the directory path'''
@@ -165,9 +179,11 @@ class RealTimeScanner(threading.Thread):
 
 
 class USBDeviceDetectionAndProtection:
-	def __init__(self):
-		self.drives = list()      #All drives inserted
-		self.drive_added = list() #All recent drives inserted
+	def __init__(self, _num_, drive):
+		self.drives = drive      #All drives or partitions inserted
+		self.drive_added = list() #All recent drives or partitions inserted
+		self.num_of_drives = _num_
+		print(self.drives)
 
 		self.threadLock = threading.Lock()
 		self.threadList = list()
@@ -188,14 +204,7 @@ class USBDeviceDetectionAndProtection:
 				mask >>= 1
 
 		elif os_type == "Linux":
-			context = pyudev.Context()
-			monitor = pyudev.Monitor.from_netlink(context)
-			monitor.filter_by(subsystem="usb")
-
-			for device in iter(monitor.poll, None):
-				if device.action == 'add':
-					#print('{} connected'.format(device))
-					self.drives.append(device)
+			self.drives = read_partitions(self.drives)
 
 		return self.getSize()
 
@@ -206,25 +215,51 @@ class USBDeviceDetectionAndProtection:
 			it up. The polling waste a lot of cpu time. However,
 			this is what i can implement for now
 		'''
-		prev_len = self.getSize()
 		id = 0
+		if os_type == "Windows":
+			prev_len = self.getSize()
 
-		while True:
-			cond_variable = self.getdrives() - prev_len
-			if cond_variable > 0:
-				'''spawn threads here: get drive letters here'''
-				for index in range(1, cond_variable):
-					try:
-						thread_obj = RealTimeScanner(id, self.drives[self.getSize() + index], self.drives, self.threadLock)
-						thread_obj.start()
-						thread_obj.join()
-						self.threadList.append(thread_obj)
-						id += 1
-					except Exception as e:
-						logs.info(" ".join(["Error occurred while starting thread", str(e.args)]))
-			else:
-				time.sleep(ptime)
-			prev_len = self.getdrives()
+			while True:
+				cond_variable = self.getdrives() - prev_len
+				if cond_variable > 0:
+					'''spawn threads here: get drive letters here'''
+					for index in range(1, cond_variable):
+						try:
+							thread_obj = RealTimeScanner(id, self.drives[self.getSize() + index], self.drives, self.threadLock)
+							thread_obj.start()
+							thread_obj.join()
+							self.threadList.append(thread_obj)
+							id += 1
+						except Exception as e:
+							logs.info(" ".join(["Error occurred while starting thread", str(e.args)]))
+				else:
+					time.sleep(ptime)
+				prev_len = self.getdrives()
+		elif os_type == "Linux":
+
+			context = pyudev.Context()
+			monitor = pyudev.Monitor.from_netlink(context)
+			monitor.filter_by(subsystem="usb")
+
+			for device in iter(monitor.poll, None):
+				if device.action == 'add':
+					self.drive_added = [self.drives[index + self.num_of_drives] for index in range(self.getdrives() - self.num_of_drives)]
+					print(self.drive_added)
+
+					if not self.drive_added == []:
+						for partition in self.drive_added:
+							try:
+								#thread_obj = RealTimeScanner(id, os.path.normpath(partition), self.drives, self.threadLock)
+								#thread_obj.start()
+								#thread_obj.join()
+								print("Started thread %d ..." % id)
+								id += 1
+							except Exception as e:
+								logs.info(" ".join(["Error occurred while starting thread", str(e.args)]))
+
+					self.num_of_drives = self.getdrives()
+				elif device.action == 'remove':
+					self.num_of_drives = self.getdrives()
 
 
 class VirusScanner:
@@ -438,13 +473,15 @@ parameters.
 			elif var_scantype == "shallow":                    #### Shallow scanning of drives
 				shallow_scanner = VirusScanner()
 				shallow_scanner.check_for_virus(var_path)
-			else:                                              #### Realtime scanning mode
-				realtime_scanner = USBDeviceDetectionAndProtection()
+			else: #### Realtime scanning mode
+				drive = read_partitions()
+				realtime_scanner = USBDeviceDetectionAndProtection(len(drive), drive)
 				print("[%d]: %s" % (PID, "Listen for usbdevices ..."))
-				try:
-					realtime_scanner.poll_on_usbdevices()
-				except:
-					print("[%d]: %s" % (PID, "Exiting real scanning mode ..."))
+				time.sleep(1)
+				#try:
+				realtime_scanner.poll_on_usbdevices()
+				#except:
+				#	print("[%d]: %s" % (PID, "Exiting real scanning mode ..."))
 
 			return
 

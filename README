@@ -25,21 +25,21 @@ the USB device to display icons of the files on the drive.
 [WARNING] storage(like pendrives). Again, do not open your drive manually on your 
 [WARNING] PC until you have scanned it with [shortcut_virus_remover.py].
 
-Note the path to your drive without opening it. Then either click on [shortcut_virus_remover.py] or 
-start your CMD and then run the [shortcut_virus_remover.py] as show below:
+Note the path to your drive without opening it. Then either click on [shortcut_virus_remover.py]
+or start your CMD and then run the [shortcut_virus_remover.py] as show below:
 		
-		CMD_PROMPT> python shortcut_virus_remover.py --path=<path to your drive> --scantype=[deep|shallow]
-								<--OR-->
-		CMD_PROMPT> python shortcut_virus_remover.py -p <path to your drive> -s [shallow|deep]
+	CMD_PROMPT> python shortcut_virus_remover.py --path=<path to your drive> --scantype=[deep|shallow]
+							<--OR-->
+	CMD_PROMPT> python shortcut_virus_remover.py -p <path to your drive> -s [shallow|deep]
 
 If you click on [shortcut_virus_remover.py], it will open a CMD window. Fill in the 
 the needed requirements and press [ENTER].
 
 However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py: 
 		
-		$CMD_PROMPT> sh ./shortcut_virus_remover.sh 
+	$CMD_PROMPT> sh ./shortcut_virus_remover.sh 
 				<--OR-->
-		$CMD_PROMPT> python ./shortcut_virus_remover.py 
+	$CMD_PROMPT> python ./shortcut_virus_remover.py 
 
 	
 +++++++++++++++++++++++++++++++++++++
