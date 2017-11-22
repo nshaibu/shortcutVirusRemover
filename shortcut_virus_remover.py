@@ -44,7 +44,7 @@ elif os_type == "Linux":
 
 	def read_partitions(drive_list=None):
 		drive = []
-		print(drive_list)
+
 		partitions = psutil.disk_partitions()
 		for part in partitions:
 			if drive_list == None:
@@ -183,7 +183,6 @@ class USBDeviceDetectionAndProtection:
 		self.drives = drive      #All drives or partitions inserted
 		self.drive_added = list() #All recent drives or partitions inserted
 		self.num_of_drives = _num_
-		print(self.drives)
 
 		self.threadLock = threading.Lock()
 		self.threadList = list()
