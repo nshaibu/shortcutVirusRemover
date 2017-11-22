@@ -44,15 +44,14 @@ elif os_type == "Linux":
 
 	def read_partitions(drive_list=None):
 		drive = []
+		if drive_list == None: drive_list=[]
 
 		partitions = psutil.disk_partitions()
 		for part in partitions:
-			if drive_list == None:
-				drive.append(part.mountpoint)
-			elif part.mountpoint not in drive_list:
+			if not str(part.mountpoint) in drive_list:
 				drive.append(part.mountpoint)
 
-		return drive  # return tuple of length and list
+		return drive  # return drive list
 
 VIRUS_DIR = "Drive"
 VIRUS_FILE = "Drive.bat"
@@ -134,17 +133,11 @@ class RealTimeScanner(threading.Thread):
 	def __init__(self, thid, drive_name, drive_list, lockdatastruct):
 		threading.Thread.__init__(self)
 		self.threadId = thid
-		#self.ThreadName = thname
 		self.param = (drive_name, drive_list, lockdatastruct)
 
 		self.deepScanner = DeepVirusScanner()
 		self.shallowScanner = VirusScanner()
 
-	#def set_name(self, name):
-	#	self.ThreadName = thid
-
-	#def get_name(self):
-	#	return self.ThreadName
 		
 	def run(self):
 		num_times_run = 0
@@ -155,9 +148,6 @@ class RealTimeScanner(threading.Thread):
 			drive_lt = self.param[1]
 			lockstruct = self.param[2]
 
-			#lockstruct.acquire(blocking=1)
-			#bool_var =
-			#lockstruct.release()
 
 			if drive in drive_lt:
 				if num_times_run == 0:
@@ -165,7 +155,10 @@ class RealTimeScanner(threading.Thread):
 						self.deepScanner.scan_all_dirs(drive, enable_usbbasicvirus_scan=True)
 
 						if not self.deepScanner.is_all_virus_removed():
+							#lockstruct.acquire(blocking=1)
 							logs.critical(" ".join(["These files are suspicion", str(self.deepScanner.get_virus_not_removed())] ))
+							#lockstruct.release()
+
 							self.deepScanner.get_virus_not_removed().clear()
 					except: 
 						return
@@ -180,12 +173,12 @@ class RealTimeScanner(threading.Thread):
 
 class USBDeviceDetectionAndProtection:
 	def __init__(self, _num_, drive):
-		self.drives = drive      #All drives or partitions inserted
-		self.drive_added = list() #All recent drives or partitions inserted
-		self.num_of_drives = _num_
+		self.drives = drive        #All drives or partitions inserted
+		self.drive_added = list()  #All recent drives or partitions inserted
+		self.num_of_drives = _num_ #Number of drives or partition mounted recently
 
-		self.threadLock = threading.Lock()
-		self.threadList = list()
+		self.threadLock = threading.Lock()   #lock object for threads and main
+		self.threadList = list()			 #list of created threads
 
 		logs.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", filename=log_filename, level=logs.DEBUG)
 
@@ -202,17 +195,19 @@ class USBDeviceDetectionAndProtection:
 				if mask & 1: self.drives.append(driv_letter)
 				mask >>= 1
 
-		elif os_type == "Linux":
-			self.drives = read_partitions(self.drives)
+			return len(self.drives)
 
-		return self.getSize()
+		elif os_type == "Linux":
+			drives = read_partitions(self.drives)
+			if not drives == []:
+				for drive in drives: self.drives.append(drive)
+
+			return len(self.drives)
 
 	def poll_on_usbdevices(self, ptime=0.5):
 		'''
-			listen whether new usb device has been attached to
-			the computer system and start a thread to clean
-			it up. The polling waste a lot of cpu time. However,
-			this is what i can implement for now
+			listen whether new usb device has been attached to the computer system and start a thread to
+			clean it up. The polling waste a lot of cpu time. However, this is what i can implement for now
 		'''
 		id = 0
 		if os_type == "Windows":
@@ -242,16 +237,16 @@ class USBDeviceDetectionAndProtection:
 
 			for device in iter(monitor.poll, None):
 				if device.action == 'add':
+					time.sleep(7)    ## wait for os to mount deice
 					self.drive_added = [self.drives[index + self.num_of_drives] for index in range(self.getdrives() - self.num_of_drives)]
-					print(self.drive_added)
 
 					if not self.drive_added == []:
 						for partition in self.drive_added:
 							try:
-								#thread_obj = RealTimeScanner(id, os.path.normpath(partition), self.drives, self.threadLock)
-								#thread_obj.start()
-								#thread_obj.join()
 								print("Started thread %d ..." % id)
+								thread_obj = RealTimeScanner(id, os.path.normpath(partition), self.drives, self.threadLock)
+								thread_obj.start()
+								thread_obj.join()
 								id += 1
 							except Exception as e:
 								logs.info(" ".join(["Error occurred while starting thread", str(e.args)]))
@@ -264,10 +259,10 @@ class USBDeviceDetectionAndProtection:
 class VirusScanner:
 	def __init__(self):
 		self.root_path = os.getcwd()
-		self.batch_file_path = None
+		self.batch_file_path = None			#virus startup batch file
 		self.virus_files = list()
 		self.virus_dir = list()
-		self.files_not_retrieved = list()
+		self.files_not_retrieved = list()     #files not retrieved from virus directory
 		self.user_data_dir = OS_DIR_SEP.join([str(self.root_path), "YourFiles" + str(PID)])
 		
 	def set_root_path(self, path):
@@ -469,11 +464,14 @@ parameters.
 			if var_scantype == "deep":                         #### Deep scanning of drives
 				deep_scanner = DeepVirusScanner()
 				deep_scanner.scan_all_dirs(var_path, enable_usbbasicvirus_scan=True)
+			
 			elif var_scantype == "shallow":                    #### Shallow scanning of drives
 				shallow_scanner = VirusScanner()
 				shallow_scanner.check_for_virus(var_path)
-			else: #### Realtime scanning mode
+			
+			else:																#### Realtime scanning mode
 				drive = read_partitions()
+
 				realtime_scanner = USBDeviceDetectionAndProtection(len(drive), drive)
 				print("[%d]: %s" % (PID, "Listen for usbdevices ..."))
 				time.sleep(1)
@@ -484,7 +482,7 @@ parameters.
 
 			return
 
-	else: #Interractive scanning
+	else: #Interactive scanning
 		prompt = str(input("\n\nDo you want a deep scanning of your device[y[N]]? "))
 		if not prompt == "" and prompt.upper()[0] == "Y":
 			deep_scanner = DeepVirusScanner()
