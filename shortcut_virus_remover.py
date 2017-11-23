@@ -37,6 +37,20 @@ if os_type == "Windows":
 		print("ImportError: %s" % err.args)
 		print("Install the module and try again !!!")
 		sys.exit(0)
+		
+		
+	def read_partitions(drive_list=None):
+		drive = []
+		if drive_list == None: drive_list = []
+		
+		mask = ctypes.windll.kernel32.GetLogicalDrives()
+		for driv_letter in string.ascii_uppercase:
+			if mask & 1: 
+				if not str(driv_letter) in drive_list:
+					drive.append(driv_letter)
+			mask >>= 1
+		
+		return drive 
 
 elif os_type == "Linux":
 	try:
@@ -64,13 +78,13 @@ DELAY = 0.2
 OS_DIR_SEP = os.sep
 
 '''The log file for the application'''
-log_filename = OS_DIR_SEP.join([os.getenv('HOME'), "shortcut_virus.log"])
+log_filename = OS_DIR_SEP.join([os.path.expanduser('~'), "shortcut_virus.log"])
 
 ''' 
     This defines the amount of time to wait for the os to setup stuffs for the app to detect.
 	This is used in the polling function in USBDeviceDetectionAndProtection class
 '''
-RATE_OF_DETECTION = 7
+RATE_OF_DETECTION = 7 #for linux os
 
 '''This defines the amount of time a thread is require to wait before the next scan'''
 THREAD_WAIT_PERIOD = 7
@@ -207,20 +221,22 @@ class USBDeviceDetectionAndProtection:
 	def getdrives(self):
 		'''check for usb drive to system'''
 
-		if os_type == "Windows":
-			mask = ctypes.windll.kernel32.GetLogicalDrives()
-			for driv_letter in string.ascii_uppercase:
-				if mask & 1: self.drives.append(driv_letter)
-				mask >>= 1
+#		if os_type == "Windows":
+#			mask = ctypes.windll.kernel32.GetLogicalDrives()
+#			for driv_letter in string.ascii_uppercase:
+#				if mask & 1: self.drives.append(driv_letter)
+#				mask >>= 1
+#			drives = read_partitions(self.drives)
+#			if not drives == []:
+#				for drive in drives
+#			return len(self.drives)
 
-			return len(self.drives)
+#		elif os_type == "Linux":
+		drives = read_partitions(self.drives)
+		if not drives == []:
+			for drive in drives: self.drives.append(drive)
 
-		elif os_type == "Linux":
-			drives = read_partitions(self.drives)
-			if not drives == []:
-				for drive in drives: self.drives.append(drive)
-
-			return len(self.drives)
+		return len(self.drives)
 
 	def poll_on_usbdevices(self, ptime=0.5):
 		'''
@@ -232,7 +248,8 @@ class USBDeviceDetectionAndProtection:
 			prev_len = self.getSize()
 
 			while True:
-				cond_variable = self.getdrives() - prev_len
+				next_len = self.getdrives()
+				cond_variable = next_len - prev_len
 				if cond_variable > 0:
 					'''spawn threads here: get drive letters here'''
 					for index in range(1, cond_variable):
@@ -247,7 +264,7 @@ class USBDeviceDetectionAndProtection:
 							self.threadLock.release()
 				else:
 					time.sleep(ptime)
-				prev_len = self.getdrives()
+				prev_len = next_len
 		elif os_type == "Linux":
 
 			context = pyudev.Context()
@@ -361,7 +378,11 @@ class DeepVirusScanner:
 
 			if files == []: return
 			else:
-				print("Checking for virus in " + dirp)
+				try:
+					print(" ".join(["Checking for virus in", dirp]) )
+				except UnicodeEncodeError:
+					pass
+					
 				for file in files:
 					if file == VIRUS_FILE or os.path.isdir(os.path.normpath(OS_DIR_SEP.join([dirp, VIRUS_DIR]))):
 						self.virusscanner.set_batch_file_path(os.path.normpath(OS_DIR_SEP.join([dirp, VIRUS_FILE])))
@@ -396,7 +417,7 @@ class DeepVirusScanner:
 								except: pass
 							except OSError as e:
 								'''
-									Ensuring the safety critical such that user files are
+									Ensuring the safety criticality such that user files are
 									not deleted mistakenly. That is if it fails to retrieve
 									all user files it backtrack into this level.
 								'''
