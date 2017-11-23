@@ -58,3 +58,10 @@ runned, it waits till when the user inserts a usb device. It then determine the
 partitions the usb device have and creates threads to clean each partition off the
 autorun viruses. It then waits for some configurable number of seconds and do a shallow
 scanner of the partitions.
+
+[COMMAND]:
+	$CMD_PROMPT> python ./shortcut_virus_remover.py -s realtime
+	
+However, still working on and testing windows realtime scanner but realtime scanning on linux is
+working.
+	
