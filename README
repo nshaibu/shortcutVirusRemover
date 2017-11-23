@@ -28,9 +28,9 @@ the USB device to display icons of the files on the drive.
 Note the path to your drive without opening it. Then either click on [shortcut_virus_remover.py]
 or start your CMD and then run the [shortcut_virus_remover.py] as show below:
 		
-	CMD_PROMPT> python shortcut_virus_remover.py --path=<path to your drive> --scantype=[deep|shallow]
+	$CMD_PROMPT> python shortcut_virus_remover.py --path=<path to your drive> --scantype=[deep|shallow|realtime]
 							<--OR-->
-	CMD_PROMPT> python shortcut_virus_remover.py -p <path to your drive> -s [shallow|deep]
+	$CMD_PROMPT> python shortcut_virus_remover.py -p <path to your drive> -s [shallow|deep|realtime]
 
 If you click on [shortcut_virus_remover.py], it will open a CMD window. Fill in the 
 the needed requirements and press [ENTER].
@@ -49,3 +49,12 @@ For the deep scanner, it is only implemented for shortcut_virus_remover.py scrip
 It can be run from any directory and it scans through all the subdirectories of the
 toplevel directory to search and remove the viruses and also recover user files:
 
+
+++++++++++++++++++++++++++++++++++++
++        REALTIME SCANNER          +
+++++++++++++++++++++++++++++++++++++
+The realtime scanner is implemented only for the python script. When the script is
+runned, it waits till when the user inserts a usb device. It then determine the 
+partitions the usb device have and creates threads to clean each partition off the
+autorun viruses. It then waits for some configurable number of seconds and do a shallow
+scanner of the partitions.
