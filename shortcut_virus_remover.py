@@ -84,7 +84,7 @@ log_filename = OS_DIR_SEP.join([os.path.expanduser('~'), "shortcut_virus.log"])
     This defines the amount of time to wait for the os to setup stuffs for the app to detect.
 	This is used in the polling function in USBDeviceDetectionAndProtection class
 '''
-RATE_OF_DETECTION = 7 #for linux os
+RATE_OF_DETECTION = 5 #for linux os
 
 '''This defines the amount of time a thread is require to wait before the next scan'''
 THREAD_WAIT_PERIOD = 7
@@ -276,7 +276,7 @@ class USBDeviceDetectionAndProtection:
 				print("[MAIN THREAD]:[PARTITIONS: %d] Listening for USB devices ..." % self.getdrives())
 
 				if device.action == 'add':
-					time.sleep(RATE_OF_DETECTION)    ## wait for os to mount deice
+					time.sleep(RATE_OF_DETECTION)    ## wait for os to mount device
 					self.drive_added = [self.drives[index + self.num_of_drives] for index in range(self.getdrives() - self.num_of_drives)]
 
 					if not self.drive_added == []:
@@ -459,7 +459,7 @@ def main(argv):
 		var_scantype = ""
 
 		try:
-			opts, args = getopt.getopt(argv[1:], "hp:s:",["help", "path=", "scantype="])
+			opts, args = getopt.getopt(argv[1:], "hp:s:w:o:",["help", "path=", "scantype=", "threadwait=", "oslatency="])
 		except getopt.GetoptError:
 			print("%s" % (" ".join([argv[0], "[-hps]"])))
 			sys.exit(20)
@@ -467,7 +467,7 @@ def main(argv):
 		for opt, arg in opts:
 			if opt in ("-h", "--help"):
 				print(""" 
-Usage: shortcut_virus_remover.py [-h] [-p path] [-s type]
+Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o]
 --help,     -h                         :Print this help message and exit.
 --path,     -p <directory>             :Specify the directory to scan.
 --scantype, -s [shallow|deep|realtime] :Specify the type of scanning to perform.
@@ -478,10 +478,29 @@ Usage: shortcut_virus_remover.py [-h] [-p path] [-s type]
                               realtime :This mode scan drives automatically and
                                         in realtime. 
 
+Configuration Options:
+--threadwait -w <wait in seconds>     :The amount of time the spawned threads 
+                                       are supposed to wait before the next 
+                                       scan for the realtime mode.
+
+--oslatency  -o <period in seconds>   :This defines the latency or delay of the 
+                                       OS in setting up certian datastructures.
+                                       It improves the responsiveness of the  
+                                       application to events like insertion and 
+                                       removal of usb devices.
+                                        
 Your can also run shortcut_virus_remover.py without any option. This will put
 you in an interactive mode and it will allow you to set all the required 
 parameters.
 				""")
+			elif opt in ("-w", "--threadwait"):
+				global THREAD_WAIT_PERIOD
+				THREAD_WAIT_PERIOD = float( (float(arg) > 0 and arg or THREAD_WAIT_PERIOD) )
+
+			elif opt in ("-o", "--oslatency"):
+				global RATE_OF_DETECTION
+				RATE_OF_DETECTION = float( (float(arg) > 0 and arg or RATE_OF_DETECTION) )
+
 			elif opt in ("-p", "--path"):
 				if not validate_dir_path(arg):
 					os_type = platform.system()
@@ -526,7 +545,7 @@ parameters.
 
 			return
 
-	else: #Interactive scanning
+	else: 																	### Interactive scanning
 		prompt = str(input("\n\nDo you want a deep scanning of your device[y[N]]? "))
 		if not prompt == "" and prompt.upper()[0] == "Y":
 			deep_scanner = DeepVirusScanner()
