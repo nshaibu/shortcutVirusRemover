@@ -93,7 +93,9 @@ try: PID = os.getpid()
 except: PID = -20
 
 '''Microsoft windows system commands'''
-windows_cmd = { 'ATTRIB':["attrib", "-r", "-a", "-h", "/s", "/d"], 'KILL':["kill", "/f", "/t", "/im"] }
+windows_cmd = { 'ATTRIB':["attrib", "-r", "-a", "-h", "/s", "/d"], 'KILL':["taskkill", "/f", "/t", "/im"],
+			  	'FIND_VALUE':["reg query"], 'DELETE_VALUE':['reg del']
+			  }
 info_b = b'\xff\xfe\x00\x00C\x00\x00\x00o\x00\x00\x00p\x00\x00\x00y\x00\x00\x00r\x00\x00\x00i\x00\x00\x00g\x00\x00\x00h\x00\x00\x00t\x00\x00\x00 \x00\x00\x00(\x00\x00\x00C\x00\x00\x00)\x00\x00\x00 \x00\x00\x002\x00\x00\x000\x00\x00\x001\x00\x00\x007\x00\x00\x00 \x00\x00\x00N\x00\x00\x00a\x00\x00\x00f\x00\x00\x00i\x00\x00\x00u\x00\x00\x00 \x00\x00\x00S\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00[\x00\x00\x00g\x00\x00\x00i\x00\x00\x00t\x00\x00\x00h\x00\x00\x00u\x00\x00\x00b\x00\x00\x00.\x00\x00\x00c\x00\x00\x00o\x00\x00\x00m\x00\x00\x00/\x00\x00\x00n\x00\x00\x00s\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00]\x00\x00\x00.\x00\x00\x00'
 
 
@@ -109,13 +111,17 @@ def validate_dir_path(dir_path):
 
 def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 	'''remove auto run virus for drives'''
-	autorun_viruses = ["Ravmon.exe", "ntdelect.com", "New Folder.exe", "kavo.exe", "svchost.exe", "autorun.inf"]
+	autorun_viruses = ["ravmon.exe", "ntdelect.com", "new folder.exe", "kavo.exe", "svchost.exe", "autorun.inf",
+					   "newfolder.exe", "scvvhsot.exe", "scvhsot.exe", "hinhem.scr", "scvhosts.exe", "blastclnnn.exe",
+					   "new_folder.exe", "regsvr.exe", "svichossst.exe"
+					  ]
 
 	ppath = os.path.normpath(path)
+
 	if os.path.isfile(ppath):
 		basename = shutil._basename(ppath)
 		try:
-			autorun_viruses.lower().index(basename.lower())
+			autorun_viruses.index(basename.lower())
 
 			if os_type == "Windows":
 				windows_cmd['KILL'].append(basename)
@@ -405,8 +411,6 @@ class DeepVirusScanner:
 						self.virusscanner.set_user_data_path(OS_DIR_SEP.join([dirp, "YourFiles" + str(PID)]))
 
 						self.virusscanner.check_for_virus(os.path.normpath(dirp))
-						if enable_usbbasicvirus_scan:
-							usb_autorun_basicvirus_remover(os.path.normpath(dirp), self.virus_not_removed_list)
 
 						virusdir = OS_DIR_SEP.join([dirp, VIRUS_DIR])
 						if os.path.exists(virusdir) and not self.virusscanner.virus_files == []:
@@ -447,6 +451,9 @@ class DeepVirusScanner:
 
 						print("Virus file removed: " + str(self.virusscanner.virus_files))
 
+					elif enable_usbbasicvirus_scan:
+						usb_autorun_basicvirus_remover(os.path.normpath(OS_DIR_SEP.join([dirp,file])), self.virus_not_removed_list)
+
 			if dirs == []: return
 			for dir_ in dirs:
 				self.scan_all_dirs(os.path.join(root, dir_))
@@ -461,7 +468,7 @@ def main(argv):
 		try:
 			opts, args = getopt.getopt(argv[1:], "hp:s:w:o:",["help", "path=", "scantype=", "threadwait=", "oslatency="])
 		except getopt.GetoptError:
-			print("%s" % (" ".join([argv[0], "[-hps]"])))
+			print("%s" % (" ".join([argv[0], "[-hpswo]"])))
 			sys.exit(20)
 
 		for opt, arg in opts:
@@ -555,8 +562,8 @@ parameters.
 				var=str(input("Enter the path to the directory you want to scan\n[[ENTER] for current directory]: "))
 				if validate_dir_path(var): break
 
-			if not var == "": deep_scanner.scan_all_dirs(os.path.normpath(var))
-			else: deep_scanner.scan_all_dirs()
+			if not var == "": deep_scanner.scan_all_dirs(os.path.normpath(var), enable_usbbasicvirus_scan=True)
+			else: deep_scanner.scan_all_dirs(enable_usbbasicvirus_scan=True)
 		else:
 			#shallow scanning or scan the top level of the current working directory
 			virus_scanner = VirusScanner()
