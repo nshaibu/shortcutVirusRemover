@@ -103,6 +103,10 @@ if os_type == "Windows":
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].append("reg add")
 
+
+	def clean_windows_registry():
+		pass
+
 elif os_type == "Linux":
 	try:
 		import pyudev
@@ -160,12 +164,19 @@ def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 	'''remove auto run virus for drives'''
 	autorun_viruses = ["ravmon.exe", "ntdelect.com", "new folder.exe", "kavo.exe", "autorun.inf",
                        "newfolder.exe", "scvvhsot.exe", "scvhsot.exe", "hinhem.scr", "scvhosts.exe",
-                       "new_folder.exe", "regsvr.exe", "svichossst.exe", "autorun.ini", "blastclnnn.exe"
-                      ]
+                       "new_folder.exe", "regsvr.exe", "svichossst.exe", "autorun.ini", "blastclnnn.exe",
+                       "csrss.exe"
+					  ]  #"arona.exe", "logon.bat"
 
 	ppath = os.path.normpath(path)
 
 	if os.path.isfile(ppath):
+		if re.match(r'^C:\\Windows\\System(32|64)\\Csrss.exe', ppath, re.IGNORECASE): return   #if is csrss is in system path return
+
+		if ppath[0:2].lower() == "c:" and \
+			not re.match(r'^C:\\Windows(\\System(32|64))*\\Revmon.exe', ppath, re.IGNORECASE) is None:  #if revmon is found in c:windows folder then is 90% malware
+			return
+
 		basename = shutil._basename(ppath)
 		try:
 			autorun_viruses.index(basename.lower())
