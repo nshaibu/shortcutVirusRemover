@@ -63,7 +63,7 @@ if os_type == "Windows":
 		try:
 			'''' Constructing window registry command for enabling TaskMgr for LOCAL_MACHINE root key'''
 			windows_cmd["R_ADD"].extend(["HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableTaskMgr", "/t", "REG_DWORD", "/d 0", "/f"])
+										 "/v DisableTaskMgr", "/t", "REG_DWORD", "/d 0", "/f >NUL"])
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_hklm:
@@ -73,7 +73,7 @@ if os_type == "Windows":
 			'''Constructing windows registry command for enabling TaskMgr for CURRENT_USER root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableTaskMgr", "/t REG_DWORD", "/d 0", "/f"])
+										 "/v DisableTaskMgr", "/t REG_DWORD", "/d 0", "/f >NUL"])
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_hkcu:
@@ -83,7 +83,7 @@ if os_type == "Windows":
 			'''Command for enable regedit for LOCAL_MACHINE root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"])
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f >NUL"])
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_reg_hklm:
@@ -93,7 +93,7 @@ if os_type == "Windows":
 			'''Command for enable regedit for CURRENT USER root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"])
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f >NUL"])
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_reg_hkcu:
