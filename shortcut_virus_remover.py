@@ -100,6 +100,7 @@ if os_type == "Windows":
 			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_reg_hkcu)
 
 		finally:
+			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].append("reg add")
 
 elif os_type == "Linux":
