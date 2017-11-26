@@ -156,9 +156,9 @@ def validate_dir_path(dir_path):
 		return True
 	else:
 		if os_type == "Linux":
-			return not re.match(r'^/(\D|\d)*', dir_path) == None
+			return not re.match(r'^/(\D|\d)*', dir_path) is None
 		elif os_type == "Windows":
-			return not re.match(r'^\D:\\(\D|\d)*', dir_path) == None
+			return not re.match(r'^\D:\\(\D|\d)*', dir_path) is None
 
 def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 	'''remove auto run virus for drives'''
