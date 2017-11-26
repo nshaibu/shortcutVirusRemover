@@ -31,6 +31,11 @@ import logging as logs
 os_type = platform.system()
 
 if os_type == "Windows":
+	'''Microsoft windows system commands'''
+	windows_cmd = {'ATTRIB': ["attrib", "-r", "-a", "-h", "/s", "/d"], 'KILL': ["taskkill", "/f", "/t", "/im"],
+                  'R_FIND': ["reg query"], 'R_DELETE': ["reg delete"], 'R_RADD': ["reg add"]
+                 }
+
 	try:
 		import ctypes
 	except ImportError as err:
@@ -41,7 +46,7 @@ if os_type == "Windows":
 		
 	def read_partitions(drive_list=None):
 		drive = []
-		if drive_list == None: drive_list = []
+		if drive_list is None: drive_list = []
 		
 		mask = ctypes.windll.kernel32.GetLogicalDrives()
 		for driv_letter in string.ascii_uppercase:
@@ -50,7 +55,52 @@ if os_type == "Windows":
 					drive.append(driv_letter)
 			mask >>= 1
 		
-		return drive 
+		return drive
+
+	def enable_windows_system_softwares():
+		'''Enables task manager and regedit'''
+
+		try:
+			'''' Constructing window registry command for enabling TaskMgr for LOCAL_MACHINE root key'''
+			windows_cmd["R_ADD"].extend(["HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
+										 "/v DisableTaskMgr", "/t", "REG_DWORD", "/d 0", "/f"])
+
+			subprocess.check_call(windows_cmd["R_ADD"])
+		except subprocess.CalledProcessError as err_hklm:
+			print("[HKLM]: enabling TaskManager failed with errcode: %d" % err_hklm)
+
+		try:
+			'''Constructing windows registry command for enabling TaskMgr for CURRENT_USER root key'''
+			windows_cmd["R_ADD"].clear()
+			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
+										 "/v DisableTaskMgr", "/t REG_DWORD", "/d 0", "/f"])
+
+			subprocess.check_call(windows_cmd["R_ADD"])
+		except subprocess.CalledProcessError as err_hkcu:
+			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_hkcu)
+
+		try:
+			'''Command for enable regedit for LOCAL_MACHINE root key'''
+			windows_cmd["R_ADD"].clear()
+			windows_cmd["R_ADD"].extend(["reg add", "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"])
+
+			subprocess.check_call(windows_cmd["R_ADD"])
+		except subprocess.CalledProcessError as err_reg_hklm:
+			print("[HKLM]: enabling Regedit failed with errcode: %d" % err_reg_hklm)
+			
+		try:
+			'''Command for enable regedit for CURRENT USER root key'''
+			windows_cmd["R_ADD"].clear()
+			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"])
+
+			subprocess.check_call(windows_cmd["R_ADD"])
+		except subprocess.CalledProcessError as err_reg_hkcu:
+			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_reg_hkcu)
+
+		finally:
+			windows_cmd["R_ADD"].append("reg add")
 
 elif os_type == "Linux":
 	try:
@@ -63,7 +113,7 @@ elif os_type == "Linux":
 
 	def read_partitions(drive_list=None):
 		drive = []
-		if drive_list == None: drive_list=[]
+		if drive_list is None: drive_list=[]
 
 		partitions = psutil.disk_partitions()
 		for part in partitions:
@@ -92,10 +142,6 @@ THREAD_WAIT_PERIOD = 7
 try: PID = os.getpid()
 except: PID = -20
 
-'''Microsoft windows system commands'''
-windows_cmd = { 'ATTRIB':["attrib", "-r", "-a", "-h", "/s", "/d"], 'KILL':["taskkill", "/f", "/t", "/im"],
-			  	'FIND_VALUE':["reg query"], 'DELETE_VALUE':['reg del']
-			  }
 info_b = b'\xff\xfe\x00\x00C\x00\x00\x00o\x00\x00\x00p\x00\x00\x00y\x00\x00\x00r\x00\x00\x00i\x00\x00\x00g\x00\x00\x00h\x00\x00\x00t\x00\x00\x00 \x00\x00\x00(\x00\x00\x00C\x00\x00\x00)\x00\x00\x00 \x00\x00\x002\x00\x00\x000\x00\x00\x001\x00\x00\x007\x00\x00\x00 \x00\x00\x00N\x00\x00\x00a\x00\x00\x00f\x00\x00\x00i\x00\x00\x00u\x00\x00\x00 \x00\x00\x00S\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00[\x00\x00\x00g\x00\x00\x00i\x00\x00\x00t\x00\x00\x00h\x00\x00\x00u\x00\x00\x00b\x00\x00\x00.\x00\x00\x00c\x00\x00\x00o\x00\x00\x00m\x00\x00\x00/\x00\x00\x00n\x00\x00\x00s\x00\x00\x00h\x00\x00\x00a\x00\x00\x00i\x00\x00\x00b\x00\x00\x00u\x00\x00\x00]\x00\x00\x00.\x00\x00\x00'
 
 
@@ -111,10 +157,10 @@ def validate_dir_path(dir_path):
 
 def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 	'''remove auto run virus for drives'''
-	autorun_viruses = ["ravmon.exe", "ntdelect.com", "new folder.exe", "kavo.exe", "svchost.exe", "autorun.inf",
-					   "newfolder.exe", "scvvhsot.exe", "scvhsot.exe", "hinhem.scr", "scvhosts.exe", "blastclnnn.exe",
-					   "new_folder.exe", "regsvr.exe", "svichossst.exe"
-					  ]
+	autorun_viruses = ["ravmon.exe", "ntdelect.com", "new folder.exe", "kavo.exe", "autorun.inf",
+                       "newfolder.exe", "scvvhsot.exe", "scvhsot.exe", "hinhem.scr", "scvhosts.exe",
+                       "new_folder.exe", "regsvr.exe", "svichossst.exe", "autorun.ini", "blastclnnn.exe"
+                      ]
 
 	ppath = os.path.normpath(path)
 
@@ -466,15 +512,15 @@ def main(argv):
 		var_scantype = ""
 
 		try:
-			opts, args = getopt.getopt(argv[1:], "hp:s:w:o:",["help", "path=", "scantype=", "threadwait=", "oslatency="])
+			opts, args = getopt.getopt(argv[1:], "rhp:s:w:o:",["registry", "help", "path=", "scantype=", "threadwait=", "oslatency="])
 		except getopt.GetoptError:
-			print("%s" % (" ".join([argv[0], "[-hpswo]"])))
+			print("%s" % (" ".join([argv[0], "[-rhpswo]"])))
 			sys.exit(20)
 
 		for opt, arg in opts:
 			if opt in ("-h", "--help"):
 				print(""" 
-Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o]
+Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o] [-r]
 --help,     -h                         :Print this help message and exit.
 --path,     -p <directory>             :Specify the directory to scan.
 --scantype, -s [shallow|deep|realtime] :Specify the type of scanning to perform.
@@ -484,6 +530,10 @@ Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o]
                                         of the specified directory.
                               realtime :This mode scan drives automatically and
                                         in realtime. 
+--registry, -r                         :Remove and change virus configuration 
+                                        keys and values in windows registry. 
+                                        Enables certian critical system programs
+                                        disabled by the virus.[WINDOWS ONLY]
 
 Configuration Options:
 --threadwait -w <wait in seconds>     :The amount of time the spawned threads 
@@ -510,7 +560,7 @@ parameters.
 
 			elif opt in ("-p", "--path"):
 				if not validate_dir_path(arg):
-					os_type = platform.system()
+					#os_type = platform.system()
 
 					if os_type == 'Linux':
 						print(r"ERROR:The directory format is wrong [Note:/home/other_dir]")
@@ -531,6 +581,11 @@ parameters.
 					sys.exit(23)
 				else:
 					var_scantype = arg.lower()
+
+			elif opt in ("-r", "--registry"):
+				if os_type == "Windows":
+					enable_windows_system_softwares()
+
 
 		if var_scantype:
 			if var_scantype == "deep":                         #### Deep scanning of drives
