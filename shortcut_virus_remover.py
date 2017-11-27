@@ -483,7 +483,7 @@ class DeepVirusScanner:
 									not deleted mistakenly. That is if it fails to retrieve
 									all user files it backtrack into this level.
 								'''
-								print("[%d]%s" % (PID, ": ".join([e, str(self.virusscanner.files_not_retrieved)])))
+								print("[%d]%s" % (PID, ": ".join([str(e.arg), str(self.virusscanner.files_not_retrieved)])))
 
 								if os_type == "Windows":
 									print("[%d]:%s" % (PID, "Changing the virus directory attributes"))
