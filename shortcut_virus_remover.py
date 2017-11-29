@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #Wed 15 Nov 2017 12:47:46 AM GMT 
 
@@ -63,7 +63,7 @@ if os_type == "Windows":
 		try:
 			'''' Constructing window registry command for enabling TaskMgr for LOCAL_MACHINE root key'''
 			windows_cmd["R_ADD"].extend(["HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableTaskMgr", "/t", "REG_DWORD", "/d 0", "/f >NUL"])
+										 "/v DisableTaskMgr", "/t", "REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_hklm:
@@ -73,7 +73,7 @@ if os_type == "Windows":
 			'''Constructing windows registry command for enabling TaskMgr for CURRENT_USER root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableTaskMgr", "/t REG_DWORD", "/d 0", "/f >NUL"])
+										 "/v DisableTaskMgr", "/t REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_hkcu:
@@ -83,7 +83,7 @@ if os_type == "Windows":
 			'''Command for enable regedit for LOCAL_MACHINE root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f >NUL"])
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_reg_hklm:
@@ -93,7 +93,7 @@ if os_type == "Windows":
 			'''Command for enable regedit for CURRENT USER root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f >NUL"])
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			subprocess.check_call(windows_cmd["R_ADD"])
 		except subprocess.CalledProcessError as err_reg_hkcu:
@@ -174,7 +174,7 @@ def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 		if re.match(r'^C:\\Windows\\System(32|64)\\Csrss.exe', ppath, re.IGNORECASE): return   #if is csrss is in system path return
 
 		if ppath[0:2].lower() == "c:" and \
-			not re.match(r'^C:\\Windows(\\System(32|64))*\\Revmon.exe', ppath, re.IGNORECASE) is None:  #if revmon is found in c:windows folder then is 90% malware
+			not re.match(r'^C:\\Windows(\\System(32|64))*\\Ravmon.exe', ppath, re.IGNORECASE) is None:  #if revmon is found in c:windows folder then is 90% malware
 			return
 
 		basename = shutil._basename(ppath)
@@ -183,12 +183,9 @@ def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
 
 			if os_type == "Windows":
 				windows_cmd['KILL'].append(basename)
-				windows_cmd['KILL'].append(">NULL")
-			
-				subprocess.check_call(windows_cmd['KILL']) # Kill process if running
-			
+				subprocess.check_call(windows_cmd['KILL'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) # Kill process if running
 				windows_cmd['KILL'].pop()
-				windows_cmd['KILL'].pop()
+				
 		except ValueError:
 			return
 		except subprocess.CalledProcessError:   #can't block deleting the file
@@ -490,15 +487,11 @@ class DeepVirusScanner:
 
 									try:
 										windows_cmd['ATTRIB'].append(virusdir)
-										windows_cmd['ATTRIB'].append(">NUL")
-										
-										subprocess.check_call(windows_cmd['ATTRIB'])
-										
-										windows_cmd['ATTRIB'].pop()
+										subprocess.check_call(windows_cmd['ATTRIB'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 										windows_cmd['ATTRIB'].pop()
 										
 									except subprocess.CalledProcessError as e:
-										print("ERROR: Failed to start process errcode=%d" % e )
+										print("ERROR: Failed to start process errcode=%d" % e.arg )
 
 								print("[%d]: %s" % (PID, "Removing virus traces ..."))
 								for fpath in self.virusscanner.virus_dir:

@@ -2,6 +2,7 @@
 
 import os
 import imp
+import re 
 
 OS_DIR_SEP = os.sep
 
@@ -24,6 +25,7 @@ virus_info_dict = { "ravmon.exe":[[isVirus, "C:\Windows", "C:\Windows\System32"]
                     "autorun.ini":[[], [], OS_DIR_SEP.join(["virus_signatures", "new_folder.py"]), None], 
                     "blastclnnn.exe":[[], [], OS_DIR_SEP.join(["virus_signatures", "blastclnnn.py"]), None],
                     "csrss.exe":[[notVirus, "C:Windows\System32"], [], OS_DIR_SEP.join(["virus_signatures", "csrss.py"]), None]
+                    "Drive.bat":[[isVirus r'\D:Drive.bat',r'\D:Drive\' ], [], OS_DIR_SEP.join["virus_signatures", "drive_bat.py"], None]
                   }  #"arona.exe", "logon.bat"
 
 class VirusRegistryEditing:
