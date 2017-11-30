@@ -63,9 +63,9 @@ if os_type == "Windows":
 		try:
 			'''' Constructing window registry command for enabling TaskMgr for LOCAL_MACHINE root key'''
 			windows_cmd["R_ADD"].extend(["HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableTaskMgr", "/t", "REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+										 "/v DisableTaskMgr", "/t", "REG_DWORD", "/d 0", "/f"])
 
-			subprocess.check_call(windows_cmd["R_ADD"])
+			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_hklm:
 			print("[HKLM]: enabling TaskManager failed with errcode: %d" % err_hklm)
 
@@ -73,9 +73,9 @@ if os_type == "Windows":
 			'''Constructing windows registry command for enabling TaskMgr for CURRENT_USER root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableTaskMgr", "/t REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+										 "/v DisableTaskMgr", "/t REG_DWORD", "/d 0", "/f"])
 
-			subprocess.check_call(windows_cmd["R_ADD"])
+			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_hkcu:
 			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_hkcu)
 
@@ -83,9 +83,9 @@ if os_type == "Windows":
 			'''Command for enable regedit for LOCAL_MACHINE root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"])
 
-			subprocess.check_call(windows_cmd["R_ADD"])
+			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_reg_hklm:
 			print("[HKLM]: enabling Regedit failed with errcode: %d" % err_reg_hklm)
 			
@@ -93,9 +93,9 @@ if os_type == "Windows":
 			'''Command for enable regedit for CURRENT USER root key'''
 			windows_cmd["R_ADD"].clear()
 			windows_cmd["R_ADD"].extend(["reg add", "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+										 "/v DisableRegistryTools", "/t REG_DWORD", "/d 0", "/f"])
 
-			subprocess.check_call(windows_cmd["R_ADD"])
+			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_reg_hkcu:
 			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_reg_hkcu)
 
@@ -166,7 +166,7 @@ def usb_autorun_basicvirus_remover(path, virus_not_removed_list):
                        "newfolder.exe", "scvvhsot.exe", "scvhsot.exe", "hinhem.scr", "scvhosts.exe",
                        "new_folder.exe", "regsvr.exe", "svichossst.exe", "autorun.ini", "blastclnnn.exe",
                        "csrss.exe"
-					  ]  #"arona.exe", "logon.bat"
+                     ]  #"arona.exe", "logon.bat"
 
 	ppath = os.path.normpath(path)
 
