@@ -60,8 +60,11 @@ autorun viruses. It then waits for some configurable number of seconds and do a 
 scanner of the partitions.
 
 [COMMAND]:
-	$CMD_PROMPT> python ./shortcut_virus_remover.py -s realtime
+	$CMD_PROMPT> python ./shortcut_virus_remover.py --scantype realtime
 	
-However, still working on and testing windows realtime scanner but realtime scanning on linux is
-working.
+Now realtime scanning on microsoft windows is working
+
+For help on the various option refer to the help by typing this command at the 
+CMD prompt:
+	$CMD_PROMPT> shortcut_virus_remover.py --help
 	
