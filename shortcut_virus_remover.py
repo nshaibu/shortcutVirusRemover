@@ -140,7 +140,7 @@ log_filename = OS_DIR_SEP.join([os.path.expanduser('~'), "shortcut_virus.log"])
     This defines the amount of time to wait for the os to setup stuffs for the app to detect.
 	This is used in the polling function in USBDeviceDetectionAndProtection class
 '''
-RATE_OF_DETECTION = 5 #for linux os
+RATE_OF_DETECTION = 5 #for linux os and windows
 
 '''This defines the amount of time a thread is require to wait before the next scan'''
 THREAD_WAIT_PERIOD = 7
@@ -516,15 +516,15 @@ def main(argv):
 		var_scantype = ""
 
 		try:
-			opts, args = getopt.getopt(argv[1:], "rhp:s:w:o:",["registry", "help", "path=", "scantype=", "threadwait=", "oslatency="])
+			opts, args = getopt.getopt(argv[1:], "ehp:s:w:o:",["enable_sys", "help", "path=", "scantype=", "threadwait=", "oslatency="])
 		except getopt.GetoptError:
-			print("%s" % (" ".join([argv[0], "[-rhpswo]"])))
+			print("%s" % (" ".join([argv[0], "[-ehpswo]"])))
 			sys.exit(20)
 
 		for opt, arg in opts:
 			if opt in ("-h", "--help"):
 				print(""" 
-Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o] [-r]
+Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o] [-e]
 --help,     -h                         :Print this help message and exit.
 --path,     -p <directory>             :Specify the directory to scan.
 --scantype, -s [shallow|deep|realtime] :Specify the type of scanning to perform.
@@ -534,10 +534,10 @@ Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o] [-r]
                                         of the specified directory.
                               realtime :This mode scan drives automatically and
                                         in realtime. 
---registry, -r                         :Remove and change virus configuration 
-                                        keys and values in windows registry. 
-                                        Enables certian critical system programs
-                                        disabled by the virus.[WINDOWS ONLY]
+--enable_sys, -e                       :Enables Windows Task Manager, msconfig
+                                        and regedit. The shortcut virus disable
+                                        the above mentioned programs when it 
+                                        affects computer.[WINDOWS ONLY]
 
 Configuration Options:
 --threadwait -w <wait in seconds>     :The amount of time the spawned threads 
@@ -586,7 +586,7 @@ parameters.
 				else:
 					var_scantype = arg.lower()
 
-			elif opt in ("-r", "--registry"):
+			elif opt in ("-e", "--enable_sys"):
 				if os_type == "Windows":
 					enable_windows_system_softwares()
 
@@ -604,10 +604,10 @@ parameters.
 				drive = read_partitions()
 
 				realtime_scanner = USBDeviceDetectionAndProtection(len(drive), drive)
-				#try:
-				realtime_scanner.poll_on_usbdevices(5)
-				#except:
-				#	print("[%d]: %s" % (PID, "Exiting real scanning mode ..."))
+				try:
+					realtime_scanner.poll_on_usbdevices(RATE_OF_DETECTION)
+				except:
+					print("[%d]: %s" % (PID, "Exiting real scanning mode ..."))
 
 			return
 

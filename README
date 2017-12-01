@@ -1,6 +1,13 @@
 Copyright (C) 2017 Nafiu Shaibu [github/nshaibu].
 Wed 15 Nov 2017 12:47:46 AM GMT
 
+++++++++++++++++++
++  REQUIREMENTS  +
+++++++++++++++++++
+1) python3				
+2) pyudev package on linux
+
+
 ++++++++++++++++++++++++++++++++++++++++
 +       SHORTCUT VIRUS REMOVER         +
 ++++++++++++++++++++++++++++++++++++++++
@@ -59,7 +66,11 @@ partitions the usb device have and creates threads to clean each partition off t
 autorun viruses. It then waits for some configurable number of seconds and do a shallow
 scanner of the partitions.
 
-[COMMAND]:
+[NOTE]: The realtime mode protects computers from getting infected by the shortcut virus.
+[NOTE]: So when you login into a PC open the CMD and run the command below so that whenever
+[NOTE]: you or someone insert usb storage device, it checks and remove the virus before
+[NOTE]: it can affect the PC too.
+
 	$CMD_PROMPT> python ./shortcut_virus_remover.py --scantype=realtime
 	
 Now realtime scanning on microsoft windows is working
@@ -69,5 +80,7 @@ CMD prompt:
 	$CMD_PROMPT> shortcut_virus_remover.py --help
 	
 	
-[IF the virus has affected your computer then contact me on]:nafiushaibu1@gmail.com
-for the script.
+	[IF THE VIRUS HAS AFFECTED YOUR COMPUTER THEN CONTACT ME ON]: 
+				[-> http://www.nafiushaibu1@gmail.com <-]				
+								[FOR THE SCRIPT.]					
+									
