@@ -50,9 +50,10 @@ if os_type == "Windows":
 		
 		mask = ctypes.windll.kernel32.GetLogicalDrives()
 		for driv_letter in string.ascii_uppercase:
-			if mask & 1: 
-				if not str(driv_letter) in drive_list:
-					drive.append(driv_letter)
+			if mask & 1:
+				pdrive = ":".join([str(driv_letter), "\\"])
+				if not pdrive in drive_list:
+					drive.append( pdrive )
 			mask >>= 1
 		
 		return drive
@@ -281,18 +282,7 @@ class USBDeviceDetectionAndProtection:
 
 	def getdrives(self):
 		'''check for usb drive to system'''
-
-#		if os_type == "Windows":
-#			mask = ctypes.windll.kernel32.GetLogicalDrives()
-#			for driv_letter in string.ascii_uppercase:
-#				if mask & 1: self.drives.append(driv_letter)
-#				mask >>= 1
-#			drives = read_partitions(self.drives)
-#			if not drives == []:
-#				for drive in drives
-#			return len(self.drives)
-
-#		elif os_type == "Linux":
+		
 		drives = read_partitions(self.drives)
 		if not drives == []:
 			for drive in drives: self.drives.append(drive)
@@ -306,16 +296,25 @@ class USBDeviceDetectionAndProtection:
 		'''
 		id = 0
 		if os_type == "Windows":
-			prev_len = self.getSize()
-
+			prev_len = self.getdrives()
+			
+			print("[MAIN THREAD]:[PARTITIONS: %d] Listening for USB devices ..." % self.getdrives())
 			while True:
-				next_len = self.getdrives()
+				self.drives = read_partitions()
+				next_len = len(self.drives)
 				cond_variable = next_len - prev_len
+				
+				if cond_variable < 0:
+					prev_len += cond_variable
+					cond_variable = abs(cond_variable)
+				
 				if cond_variable > 0:
 					'''spawn threads here: get drive letters here'''
-					for index in range(1, cond_variable):
+					print("[MAIN THREAD]:[PARTITIONS: %d] Listening for USB devices ..." % next_len)
+					
+					for index in range(cond_variable):
 						try:
-							thread_obj = RealTimeScanner(id, self.drives[self.getSize() + index], self.drives, self.threadLock)
+							thread_obj = RealTimeScanner(id, self.drives[prev_len + index], self.drives, self.threadLock)
 							thread_obj.start()
 							self.threadList.append(thread_obj)
 							id += 1
@@ -606,7 +605,7 @@ parameters.
 
 				realtime_scanner = USBDeviceDetectionAndProtection(len(drive), drive)
 				#try:
-				realtime_scanner.poll_on_usbdevices()
+				realtime_scanner.poll_on_usbdevices(5)
 				#except:
 				#	print("[%d]: %s" % (PID, "Exiting real scanning mode ..."))
 
