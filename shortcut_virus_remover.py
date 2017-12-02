@@ -68,7 +68,7 @@ if os_type == "Windows":
 
 			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_hklm:
-			print("[HKLM]: enabling TaskManager failed with errcode: %d" % err_hklm)
+			print("[HKLM]: enabling TaskManager failed with errcode: %d" % err_hklm.args)
 
 		try:
 			'''Constructing windows registry command for enabling TaskMgr for CURRENT_USER root key'''
@@ -78,7 +78,7 @@ if os_type == "Windows":
 
 			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_hkcu:
-			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_hkcu)
+			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_hkcu.args)
 
 		try:
 			'''Command for enable regedit for LOCAL_MACHINE root key'''
@@ -88,7 +88,7 @@ if os_type == "Windows":
 
 			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_reg_hklm:
-			print("[HKLM]: enabling Regedit failed with errcode: %d" % err_reg_hklm)
+			print("[HKLM]: enabling Regedit failed with errcode: %d" % err_reg_hklm.args)
 			
 		try:
 			'''Command for enable regedit for CURRENT USER root key'''
@@ -98,7 +98,7 @@ if os_type == "Windows":
 
 			subprocess.check_call(windows_cmd["R_ADD"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		except subprocess.CalledProcessError as err_reg_hkcu:
-			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_reg_hkcu)
+			print("[HKCU]: enabling TaskManager failed with errcode: %d" % err_reg_hkcu.args)
 
 		finally:
 			windows_cmd["R_ADD"].clear()
@@ -479,7 +479,7 @@ class DeepVirusScanner:
 									not deleted mistakenly. That is if it fails to retrieve
 									all user files it backtrack into this level.
 								'''
-								print("[%d]%s" % (PID, ": ".join([str(e.arg), str(self.virusscanner.files_not_retrieved)])))
+								print("[%d]%s" % (PID, ": ".join([str(e.args), str(self.virusscanner.files_not_retrieved)])))
 
 								if os_type == "Windows":
 									print("[%d]:%s" % (PID, "Changing the virus directory attributes"))
@@ -490,7 +490,7 @@ class DeepVirusScanner:
 										windows_cmd['ATTRIB'].pop()
 										
 									except subprocess.CalledProcessError as e:
-										print("ERROR: Failed to start process errcode=%d" % e.arg )
+										print("ERROR: Failed to start process errcode=%d" % e.args )
 
 								print("[%d]: %s" % (PID, "Removing virus traces ..."))
 								for fpath in self.virusscanner.virus_dir:
@@ -537,7 +537,7 @@ Usage: shortcut_virus_remover.py [-h] [-p path] [-s type] [-w] [-o] [-e]
 --enable_sys, -e                       :Enables Windows Task Manager, msconfig
                                         and regedit. The shortcut virus disable
                                         the above mentioned programs when it 
-                                        affects computer.[WINDOWS ONLY]
+                                        affects computers.[WINDOWS ONLY]
 
 Configuration Options:
 --threadwait -w <wait in seconds>     :The amount of time the spawned threads 

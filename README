@@ -4,7 +4,7 @@ Wed 15 Nov 2017 12:47:46 AM GMT
 ++++++++++++++++++
 +  REQUIREMENTS  +
 ++++++++++++++++++
-1) python3				
+1) python 3				
 2) pyudev package on linux
 
 
@@ -80,7 +80,8 @@ CMD prompt:
 	$CMD_PROMPT> shortcut_virus_remover.py --help
 	
 	
+	
 	[IF THE VIRUS HAS AFFECTED YOUR COMPUTER THEN CONTACT ME ON]: 
-				[-> http://www.nafiushaibu1@gmail.com <-]				
-								[FOR THE SCRIPT.]					
+				[-> http://www.nafiushaibu1@gmail.com <-]
+							[FOR THE SCRIPT.]
 									
