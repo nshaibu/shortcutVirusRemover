@@ -29,34 +29,39 @@ the USB device to display icons of the files on the drive.
 
 Note the path to your drive without opening it. Then either click on [shortcut_virus_remover.py]
 or start your CMD and then run the [shortcut_virus_remover.py] as show below:
-	```
-	$CMD_PROMPT> python shortcut_virus_remover.py --path=<path to your drive> --scantype=[deep|shallow|realtime]
-	```
-							OR
-	```						
-	$CMD_PROMPT> python shortcut_virus_remover.py -p <path to your drive> -s [shallow|deep|realtime]
-	```
+
+```
+$CMD_PROMPT> python shortcut_virus_remover.py --path=<path to your drive> --scantype=[deep|shallow|realtime]
+```
+
+		OR
+		
+```						
+$CMD_PROMPT> python shortcut_virus_remover.py -p <path to your drive> -s [shallow|deep|realtime]
+```
 
 If you click on [shortcut_virus_remover.py], it will open a CMD window. Fill in the 
 the needed requirements and press [ENTER].
 
 However on linux you can either use shortcut_virus_remover.sh or shortcut_virus_remover.py: 
-	```	
-	$CMD_PROMPT> sh ./shortcut_virus_remover.sh
-	```
-				OR
-	```			
-	$CMD_PROMPT> python ./shortcut_virus_remover.py
-	```
+```	
+$CMD_PROMPT> sh ./shortcut_virus_remover.sh
+```
+
+		OR
+		
+```			
+$CMD_PROMPT> python ./shortcut_virus_remover.py
+```
 
 	
-## DEEP SCANNER 
+### DEEP SCANNER 
 For the deep scanner, it is only implemented for shortcut_virus_remover.py script:
 It can be run from any directory and it scans through all the subdirectories of the
 toplevel directory to search and remove the viruses and also recover user files:
 
 
-# REALTIME SCANNER 
+### REALTIME SCANNER 
 The realtime scanner is implemented only for the python script. When the script is
 runned, it waits till when the user inserts a usb device. It then determine the 
 partitions the usb device have and creates threads to clean each partition off the
@@ -67,14 +72,16 @@ scanner of the partitions.
 [NOTE]: So when you login into a PC open the CMD and run the command below so that whenever
 [NOTE]: you or someone insert usb storage device, it checks and remove the virus before
 [NOTE]: it can affect the PC too.
-	```
-	$CMD_PROMPT> python ./shortcut_virus_remover.py --scantype=realtime
-	```
+
+```
+$CMD_PROMPT> python ./shortcut_virus_remover.py --scantype=realtime
+```
 	
 Now realtime scanning on microsoft windows is working
 
 For help on the various option refer to the help by typing this command at the 
 CMD prompt:
-	```
-	$CMD_PROMPT> shortcut_virus_remover.py --help
-	```
+
+```
+$CMD_PROMPT> shortcut_virus_remover.py --help
+```
